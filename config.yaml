@@ -1,0 +1,85 @@
+# ============================================= #
+# config.yaml — SnakeMergeAnnotation - workflow #                
+# ============================================= #
+
+# ======================================================================================= #
+# PATHS                                                                                   #
+#======================================================================================== #
+paths:
+  fasta_dir:  "/path/to/your/genomes"   # path to the .fasta input file
+  output_dir: "/path/to/your/output"          # path where the results will be saved
+
+# ----------------------------------------------------------------------------- #
+# COMPUTATIONAL RESOURCES                                                       #
+# ----------------------------------------------------------------------------- #
+general:
+  threads: 8          # threads per job (default: 8)
+
+resources:
+  mem_mb:   16000     # memory per job in MB (default: 16GB)
+  max_jobs: 2         # organisms processed in parallel in the merge (default: 2)
+
+# ----------------------------------------------------------------------------- #
+# BAKTA                                                                         #
+# ----------------------------------------------------------------------------- #
+bakta:
+  enabled: true
+  docker_image: "engbio/bakta:v1"
+  db_path: "/path/to/bakta_db/db-light"  # [REQUIRED] Bakta database path
+  db_type: "light"                               # "light" (~3.9GB) or "full" (~84GB)
+  genus: "Streptomyces"
+  species: ""
+  strain: ""
+  gram: "+"             # "+" gram-positive | "-" gram-negative | "?" unknown
+  translation_table: 11
+  min_contig_length: 200
+  compliant: false
+
+# ----------------------------------------------------------------------------- #
+# PROKKA                                                                        #
+# ----------------------------------------------------------------------------- #
+prokka:
+  enabled: true
+  docker_image: "engbio/prokka:v1"
+  genus: "Streptomyces"
+  kingdom: "Bacteria"  # Bacteria | Archaea | Viruses | Mitochondria
+  gcode: 11            # genetic code (11 = bacteria/archaea)
+
+# ----------------------------------------------------------------------------- #
+# DFAST                                                                         #
+# ----------------------------------------------------------------------------- #
+dfast:
+  enabled: true
+  docker_image: "engbio/dfast:v1"
+  db_path: "/path/to/dfast_db"  # [REQUIRED] DFAST database path
+  organism: "Streptomyces"
+
+# ----------------------------------------------------------------------------- #
+# PATRIC / BV-BRC                                                               #
+# ----------------------------------------------------------------------------- #
+patric:
+  enabled: true
+  docker_image: "engbio/patric:v1"
+  username: "user@bv-brc.org"   # [REQUIRED] your BV-BRC login
+  password: "your_password"             # [REQUIRED] your BV-BRC password
+  taxonomy_id: 1883                 # organism NCBI TaxID
+  description: "Bacteria"          # Bacteria | Archaea | Viruses | auto
+  workspace_output_dir: "home"
+  monitor_interval: 60             # seconds between status checks
+
+# -----------------------------------------------------------------------------
+# MERGE — hypothetical protein reduction pipeline
+#
+# BLASTp parameters for comparison between annotators:
+#   min_pident : minimum identity (%) to consider a match (default: 95.0)
+#   min_qcov   : minimum alignment coverage (0-1) (default: 0.9 = 90%)
+#   jobs       : organisms processed in parallel (default: 2)
+#
+# Example of stricter usage:   min_pident: 100.0, min_qcov: 1.0
+# Example of more permissive usage: min_pident: 80.0,  min_qcov: 0.7
+# -----------------------------------------------------------------------------
+merge:
+  docker_image: "engbio/merge:v1"
+  min_pident: 95.0    # minimum BLASTp identity (default: 95.0)
+  min_qcov:   0.9     # minimum alignment coverage (default: 0.9)
+  jobs:       2       # organisms in parallel in the merge (default: 2)
