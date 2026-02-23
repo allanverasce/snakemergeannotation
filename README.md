@@ -60,6 +60,13 @@ All tools run **inside Docker containers**.
 ---
 
 ## Requirements
+We recommend creating a Python environment to install the package versions. An example is shown below:
+
+```
+python -m venv venv
+source /home/allan/venv/bin/activate
+pip install snakemake
+```
 
 ### Host dependencies (only these two)
 
