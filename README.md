@@ -230,7 +230,8 @@ merge:
 ```bash
 # docker run --rm engbio/merge:v1 --help
 ```
-# When running the container, the banner will appear like this, with a small preview of the merge options:
+
+### When running the container, the banner will appear like this, with a small preview of the merge options:
 ![logsnakemerge](https://github.com/user-attachments/assets/ca149a4d-68cd-41d2-bffa-ce4b362cf7b2)
 
 
