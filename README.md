@@ -33,7 +33,7 @@ SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, a
 
 ---
 
-## Overview
+## Main steps into SnakeMergeAnnotation Pipeline
 
 <p align="center">
   <img src="image/pipeline.png" alt="Logo" width="300" height="800" />
