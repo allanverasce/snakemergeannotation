@@ -1,17 +1,19 @@
 # SnakeMergeAnnotation
 
 <p align="center">
+  <img src="logo_snakemergeannotation.png" alt="SnakeMergeAnnotation Logo" width="400">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/snakemake-≥9.0-brightgreen" alt="Snakemake">
   <img src="https://img.shields.io/badge/docker-required-blue" alt="Docker">
   <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
-![Uploading logo_snakemergeannotation.png…]()
-
 > **Dockerized Snakemake Pipeline for Hypothetical Protein Curation in Prokaryotic Genomes.**
 
-SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, and BV-BRC/PATRIC) in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins — achieving **~50% reduction in hypothetical proteins** across bacterial genomes.
+SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, and BV-BRC/PATRIC) in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins.
 
 ---
 
