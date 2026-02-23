@@ -36,17 +36,10 @@ SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, a
 ## Overview
 
 ```
-  FASTAs
-    │
-    ├──▶  Bakta    ──────────────────┐
-    ├──▶  Prokka   ────────────────┐ │
-    ├──▶  DFAST    ──────────────┐ │ │
-    └──▶  BV-BRC   ────────────┐ │ │ │
-                               │ │ │ │
-                         Algorithm MergeAnnotation
-                               │
-                     Enriched GenBank (.gb)
-                  hypothetical protein reduction
+<p align="center">
+  <img width="600" alt="pipeline.png" src="https://github.com/user-attachments/assets/fed334b3-01c3-4d38-b17a-b3a278eacb2f" />
+</p>
+
 ```
 
 All tools run **inside Docker containers** — zero scientific dependencies required on the host machine.
