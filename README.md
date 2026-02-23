@@ -257,7 +257,10 @@ Snakemake automatically resumes from where it stopped — just run the same comm
 ```bash
 snakemake --configfile config.yaml --cores 8
 ```
-
+### or if a job failed in the middle and left an incomplete file, use:
+```bash
+snakemake --configfile config.yaml --cores 8 --rerun-incomplete
+```
 ---
 
 ## Output Structure
