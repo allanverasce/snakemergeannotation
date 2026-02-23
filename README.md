@@ -233,13 +233,12 @@ Place your genome FASTA files in the `fasta_dir` defined in `config.yaml`. The w
 snakemake --configfile config.yaml --cores 8
 ```
 
-On first run, the ASCII banner will appear:
+```bash
+# docker run --rm engbio/merge:v1 --help
+# st run, the ASCII banner will appear:
+On fir![logsnakemerge](https://github.com/user-attachments/assets/ca149a4d-68cd-41d2-bffa-ce4b362cf7b2)
+```
 
-```
- ____              _        __  __                        _                      _        _   _
-/ ___| _ __   __ _| | _____|  \/  | ___ _ __ __ _  ___   / \   _ __  _ __   ___ | |_ __ _| |_(_) ___  _ __
-...
-```
 
 ### Dry run (check the DAG without executing)
 
