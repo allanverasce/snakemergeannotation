@@ -1,7 +1,7 @@
 # SnakeMergeAnnotation
 
 <p align="center">
-  <img src="logo_snakemergeannotation.png" alt="SnakeMergeAnnotation Logo" width="400">
+  <img width="600" alt="logo_snakemergeannotation" src="https://github.com/user-attachments/assets/fed334b3-01c3-4d38-b17a-b3a278eacb2f" />
 </p>
 
 <p align="center">
