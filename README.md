@@ -41,7 +41,7 @@ SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, a
 
 
 
-All tools run **inside Docker containers** — zero scientific dependencies required on the host machine.
+All tools run **inside Docker containers**.
 
 ---
 
