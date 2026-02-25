@@ -150,7 +150,22 @@ docker run --rm \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --hmm TIGRFAMs
 ```
-# Basic Usage
+
+### The user can run SnakeMergeAnnotation in two different ways.
+
+The first is the **basic mode**, designed for greater accessibility and ease of use. In this format, the program is run through an intuitive and user-friendly web interface, allowing the user to enter:
+
+ - The path to the input files in FASTA format;
+ - The output directory for storing the results;
+ - The analysis configuration parameters.
+
+Additionally, the interface allows users to monitor the progress of the processing in real time, offering greater transparency, traceability, and control over the execution of the pipeline.
+
+The second execution format is called **advanced mode**. In this mode, the user manually performs the necessary configurations and selects the command line most appropriate for their specific problem. This mode is recommended for users who are more familiar with computing environments, allowing for greater flexibility, parameter customization, and integration with other automated workflows or high-performance computing (HPC) environments.
+
+
+
+# Basic mode
 
 
 <img src="image/main.png" alt="Window1" width="800" height="600" />  
@@ -158,7 +173,7 @@ docker run --rm \
 
 
 ---
-# Advanced usage
+# Advanced mode
 
 ## Configuration
 
