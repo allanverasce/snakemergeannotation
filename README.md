@@ -153,7 +153,7 @@ docker run --rm \
 # Basic Usage
 
 
-<img src="imagen/main.png" alt="Window1" width="800" height="600" />  
+<img src="image/main.png" alt="Window1" width="800" height="600" />  
 
 
 
