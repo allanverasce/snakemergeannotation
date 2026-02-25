@@ -166,10 +166,12 @@ docker run --rm \
 
 
 # Basic mode
+To open the main window of the SnakeMergeAnnotation interface, please go ahead and execute the line below. After that, open your preferred internet browser and enter the URL http://localhost:5000 into the address bar.
 
+The main window will be displayed as shown in the figure below.
 
 <img src="image/main.png" alt="Window1" width="800" height="600" />  
-
+**Figure from the SnakeMergeAnnotation main window**
 
 <img src="image/annotations.png" alt="Window1" width="800" height="600" />  
 
