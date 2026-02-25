@@ -153,7 +153,7 @@ docker run --rm \
 
 ### The user can run SnakeMergeAnnotation in two different ways.
 
-<p align="justify">The first is the `basic mode`, designed for greater accessibility and ease of use. In this format, the program is run through an intuitive and user-friendly web interface, allowing the user to enter:</p>
+<p align="justify">The first is the basic mode, designed for greater accessibility and ease of use. In this format, the program is run through an intuitive and user-friendly web interface, allowing the user to enter:</p>
 
  - The path to the input files in FASTA format;
  - The output directory for storing the results;
@@ -161,7 +161,7 @@ docker run --rm \
 
 <p align="justify"> Additionally, the interface allows users to monitor the progress of the processing in real time, offering greater transparency, traceability, and control over the execution of the pipeline.</p>
 
-<p align="justify">The second execution format is called `advanced mode`. In this mode, the user manually performs the necessary configurations and selects the command line most appropriate for their specific problem. This mode is recommended for users who are more familiar with computing environments, allowing for greater flexibility, parameter customization, and integration with other automated workflows or high-performance computing (HPC) environments.</p>
+<p align="justify">The second execution format is called advanced mode. In this mode, the user manually performs the necessary configurations and selects the command line most appropriate for their specific problem. This mode is recommended for users who are more familiar with computing environments, allowing for greater flexibility, parameter customization, and integration with other automated workflows or high-performance computing (HPC) environments.</p>
 
 
 
