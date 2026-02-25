@@ -171,6 +171,13 @@ The second execution format is called **advanced mode**. In this mode, the user 
 <img src="image/main.png" alt="Window1" width="800" height="600" />  
 
 
+<img src="image/annotations.png" alt="Window1" width="800" height="600" />  
+
+
+<img src="image/merge.png" alt="Window1" width="800" height="600" />  
+
+
+<img src="image/execution.png" alt="Window1" width="800" height="600" />  
 
 ---
 # Advanced mode
