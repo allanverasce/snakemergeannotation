@@ -152,6 +152,7 @@ docker run --rm \
 ```
 
 ---
+# Advanced usage
 
 ## Configuration
 
@@ -311,6 +312,7 @@ output_dir/
     ├── patric/   all_samples.log
     └── merge/    pipeline.log
 ```
+---
 
 ### Key output files
 
