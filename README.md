@@ -470,4 +470,4 @@ If you use SnakeMergeAnnotation in your research, please cite the underlying too
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+AGPL-3.0 license — see [LICENSE](LICENSE) for details.
