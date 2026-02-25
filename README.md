@@ -174,8 +174,10 @@ The main window will be displayed as shown in the figure below.
 
 **Figure from the SnakeMergeAnnotation main window**
 
+The following image is from the second tab, called annotators, where the user can configure each annotation tool according to the type of organism being analyzed. It is important to enter the full path of the previously downloaded databases and, in the specific case of the Patric tool, the user must register to obtain the platform username and password.
 
 <img src="image/annotations.png" alt="Window1" width="800" height="600" />  
+
 
 
 <img src="image/merge.png" alt="Window1" width="800" height="600" />  
