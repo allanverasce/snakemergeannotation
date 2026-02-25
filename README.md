@@ -151,7 +151,7 @@ docker run --rm \
     python /dfast_core/scripts/file_downloader.py --hmm TIGRFAMs
 ```
 
-### The user can run SnakeMergeAnnotation in two different ways.
+### Types of SnakeMergeAnnotation execution 
 
 <p align="justify">The first is the basic mode, designed for greater accessibility and ease of use. In this format, the program is run through an intuitive and user-friendly web interface, allowing the user to enter:</p>
 
