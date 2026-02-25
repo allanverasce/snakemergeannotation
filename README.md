@@ -170,7 +170,7 @@ To open the main window of the SnakeMergeAnnotation interface, please go ahead a
 
 The main window will be displayed as shown in the figure below.
 
-<img src="image/main.png" alt="Window1" width="800" height="600" />  
+<img src="image/mainWindow.png" alt="Window1" width="800" height="600" />  
 **Figure from the SnakeMergeAnnotation main window**
 
 <img src="image/annotations.png" alt="Window1" width="800" height="600" />  
