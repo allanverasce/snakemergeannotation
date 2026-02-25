@@ -269,7 +269,61 @@ snakemake --configfile config.yaml --cores 8
 ```bash
 snakemake --configfile config.yaml --cores 8 --rerun-incomplete
 ```
+
 ---
+
+## HPC / Cloud Execution
+
+### SLURM cluster
+
+Install the SLURM executor plugin and run:
+
+```bash
+pip install snakemake-executor-plugin-slurm
+
+snakemake --configfile config.yaml \
+          --executor slurm \
+          --jobs 100 \
+          --default-resources mem_mb=16000 runtime=120 cpus_per_task=8 slurm_partition=cpu
+```
+
+### AWS Batch / Google Batch
+
+```bash
+pip install snakemake-executor-plugin-aws-batch
+
+snakemake --configfile config.yaml \
+          --executor aws-batch \
+          --jobs 500
+```
+
+### Adjusting resources per rule
+
+For large genomes or slower machines, increase resources directly in the command:
+
+```bash
+snakemake --configfile config.yaml --cores 16 \
+          --set-resources annotate_dfast:mem_mb=32000
+```
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Output Structure
 
@@ -364,43 +418,7 @@ merge:
 
 > **Important:** Annotation transfer only occurs for **full-length alignments** where `alignment_length == CDS_length` for both query and subject. This prevents partial matches and frameshifted CDS from being transferred.
 
----
 
-## HPC / Cloud Execution
-
-### SLURM cluster
-
-Install the SLURM executor plugin and run:
-
-```bash
-pip install snakemake-executor-plugin-slurm
-
-snakemake --configfile config.yaml \
-          --executor slurm \
-          --jobs 100 \
-          --default-resources mem_mb=16000 runtime=120 cpus_per_task=8 slurm_partition=cpu
-```
-
-### AWS Batch / Google Batch
-
-```bash
-pip install snakemake-executor-plugin-aws-batch
-
-snakemake --configfile config.yaml \
-          --executor aws-batch \
-          --jobs 500
-```
-
-### Adjusting resources per rule
-
-For large genomes or slower machines, increase resources directly in the command:
-
-```bash
-snakemake --configfile config.yaml --cores 16 \
-          --set-resources annotate_dfast:mem_mb=32000
-```
-
----
 
 
 ## Citation
