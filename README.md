@@ -150,6 +150,12 @@ docker run --rm \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --hmm TIGRFAMs
 ```
+# Basic Usage
+
+
+<img src="imagen/main.png" alt="Window1" width="800" height="600" />  
+
+
 
 ---
 # Advanced usage
