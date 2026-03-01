@@ -1,85 +1,79 @@
-# ============================================= #
-# config.yaml — SnakeMergeAnnotation - workflow #                
-# ============================================= #
+# =============================================================================
+# SnakeMergeAnnotation — config.yaml
+# =============================================================================
 
-# ======================================================================================= #
-# PATHS                                                                                   #
-#======================================================================================== #
+# -----------
+# PATHS
+# -----------
 paths:
-  fasta_dir:  "/path/to/your/genomes"   # path to the .fasta input file
-  output_dir: "/path/to/your/output"          # path where the results will be saved
+  fasta_dir:  "/path/to/your/genomes"       # directory with .fasta files
+  output_dir: "/path/to/your/output"        # all outputs go here
 
-# ----------------------------------------------------------------------------- #
-# COMPUTATIONAL RESOURCES                                                       #
-# ----------------------------------------------------------------------------- #
+# -----------
+# GENERAL
+# -----------
 general:
-  threads: 8          # threads per job (default: 8)
+  threads: 8                                # used by all tools (set to your CPU count)
 
+# -----------
+# RESOURCES
+# -----------
 resources:
-  mem_mb:   16000     # memory per job in MB (default: 16GB)
-  max_jobs: 2         # organisms processed in parallel in the merge (default: 2)
+  mem_mb:   16000                           # memory per job in MB
+  max_jobs: 2                               # max parallel jobs
 
-# ----------------------------------------------------------------------------- #
-# BAKTA                                                                         #
-# ----------------------------------------------------------------------------- #
+# -----------
+# BAKTA
+# -----------
 bakta:
-  enabled: true
   docker_image: "engbio/bakta:v1"
-  db_path: "/path/to/bakta_db/db-light"  # [REQUIRED] Bakta database path
-  db_type: "light"                               # "light" (~3.9GB) or "full" (~84GB)
-  genus: "Streptomyces"
-  species: ""
-  strain: ""
-  gram: "+"             # "+" gram-positive | "-" gram-negative | "?" unknown
+  db_path:      "/path/to/databases/bakta_db/db-light"
+  genus:        ""                          # optional
+  species:      ""                          # optional
+  gram:         "?"                         # + or - or ? (unknown)
   translation_table: 11
-  min_contig_length: 200
-  compliant: false
 
-# ----------------------------------------------------------------------------- #
-# PROKKA                                                                        #
-# ----------------------------------------------------------------------------- #
+# -----------
+# PROKKA
+# -----------
 prokka:
-  enabled: true
   docker_image: "engbio/prokka:v1"
-  genus: "Streptomyces"
-  kingdom: "Bacteria"  # Bacteria | Archaea | Viruses | Mitochondria
-  gcode: 11            # genetic code (11 = bacteria/archaea)
+  genus:        ""                          # optional
+  kingdom:      "Bacteria"
+  gcode:        11
 
-# ----------------------------------------------------------------------------- #
-# DFAST                                                                         #
-# ----------------------------------------------------------------------------- #
+# -----------
+# DFAST
+# -----------
 dfast:
-  enabled: true
   docker_image: "engbio/dfast:v1"
-  db_path: "/path/to/dfast_db"  # [REQUIRED] DFAST database path
-  organism: "Streptomyces"
+  db_path:      "/path/to/databases/dfast_db"
 
-# ----------------------------------------------------------------------------- #
-# PATRIC / BV-BRC                                                               #
-# ----------------------------------------------------------------------------- #
+# -----------
+# PATRIC
+# -----------
 patric:
-  enabled: true
-  docker_image: "engbio/patric:v1"
-  username: "user@bv-brc.org"   # [REQUIRED] your BV-BRC login
-  password: "your_password"             # [REQUIRED] your BV-BRC password
-  taxonomy_id: 1883                 # organism NCBI TaxID
-  description: "Bacteria"          # Bacteria | Archaea | Viruses | auto
-  workspace_output_dir: "home"
-  monitor_interval: 60             # seconds between status checks
+  docker_image:         "engbio/patric:v1"
+  username:             "your@email.com"   # BV-BRC account
+  password:             "your_password"
+  taxonomy_id:          "1883"             # e.g. 1883 = Streptomyces
+  description:          "Annotation via BV-BRC"
+  workspace_output_dir: "my_annotations"
+  monitor_interval:     60                 # seconds between status checks
 
-# -----------------------------------------------------------------------------
-# MERGE — hypothetical protein reduction pipeline
-#
-# BLASTp parameters for comparison between annotators:
-#   min_pident : minimum identity (%) to consider a match (default: 95.0)
-#   min_qcov   : minimum alignment coverage (0-1) (default: 0.9 = 90%)
-#   jobs       : organisms processed in parallel (default: 2)
-#
-# Example of stricter usage:   min_pident: 100.0, min_qcov: 1.0
-# Example of more permissive usage: min_pident: 80.0,  min_qcov: 0.7
-# -----------------------------------------------------------------------------
+# -----------
+# MERGE
+# -----------
 merge:
   docker_image: "engbio/merge:v1"
-  min_pident: 95.0    # minimum BLASTp identity (default: 95.0)
-  min_qcov:   0.9     # minimum alignment coverage (default: 0.9)
-  jobs:       2       # organisms in parallel in the merge (default: 2)
+  min_pident:   95.0                       # minimum BLASTp identity %
+  min_qcov:     0.9                        # minimum query coverage (0-1)
+  jobs:         2                          # organisms processed in parallel
+
+# -----------
+# EGGNOG
+# -----------
+eggnog:
+  docker_image: "quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1"
+  db_path:      "/path/to/databases/eggnog"   # directory with eggnog.db, eggnog_proteins.dmnd, etc.
+  sensmode:     "diamond"                      # diamond | mmseqs | hmmer
