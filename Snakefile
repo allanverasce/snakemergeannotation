@@ -4,13 +4,12 @@
 # Usage:
 #   snakemake --configfile config.yaml --cores 8
 # =============================================================================
-
 import os
 import glob
 import subprocess
 
 # =======
-# BANNER 
+# BANNER
 # =======
 
 onstart:
@@ -37,11 +36,12 @@ FASTA_DIR  = config["paths"]["fasta_dir"]
 OUTPUT_DIR = config["paths"]["output_dir"]
 THREADS    = config["general"]["threads"]
 
-IMG_BAKTA  = config["bakta"]["docker_image"]
-IMG_PROKKA = config["prokka"]["docker_image"]
-IMG_DFAST  = config["dfast"]["docker_image"]
-IMG_PATRIC = config["patric"]["docker_image"]
-IMG_MERGE  = config["merge"]["docker_image"]
+IMG_BAKTA   = config["bakta"]["docker_image"]
+IMG_PROKKA  = config["prokka"]["docker_image"]
+IMG_DFAST   = config["dfast"]["docker_image"]
+IMG_PATRIC  = config["patric"]["docker_image"]
+IMG_MERGE   = config["merge"]["docker_image"]
+IMG_EGGNOG  = config["eggnog"]["docker_image"]
 
 MEM_MB   = config["resources"]["mem_mb"]
 MAX_JOBS = config["resources"]["max_jobs"]
@@ -69,6 +69,9 @@ MERGE_MIN_PIDENT = config["merge"].get("min_pident", 95.0)
 MERGE_MIN_QCOV   = config["merge"].get("min_qcov",   0.9)
 MERGE_JOBS       = config["merge"].get("jobs",        2)
 
+DB_EGGNOG        = config["eggnog"]["db_path"]
+EGGNOG_SENSMODE  = config["eggnog"].get("sensmode", "diamond")
+
 # =====================
 # SAMPLE DETECTION
 # =====================
@@ -91,13 +94,14 @@ print(f"[SnakeMergeAnnotation] {len(SAMPLES)} genome(s) detected: {', '.join(SAM
 # DIRECTORIES
 # ===========
 
-DIR_BAKTA  = os.path.join(OUTPUT_DIR, "bakta_out")
-DIR_PROKKA = os.path.join(OUTPUT_DIR, "prokka_out")
-DIR_DFAST  = os.path.join(OUTPUT_DIR, "dfast_out")
-DIR_PATRIC = os.path.join(OUTPUT_DIR, "patric_out")
-DIR_MERGE  = os.path.join(OUTPUT_DIR, "merge_input")
-DIR_RESULT = os.path.join(OUTPUT_DIR, "merge_results")
-DIR_LOGS   = os.path.join(OUTPUT_DIR, "logs")
+DIR_BAKTA   = os.path.join(OUTPUT_DIR, "bakta_out")
+DIR_PROKKA  = os.path.join(OUTPUT_DIR, "prokka_out")
+DIR_DFAST   = os.path.join(OUTPUT_DIR, "dfast_out")
+DIR_PATRIC  = os.path.join(OUTPUT_DIR, "patric_out")
+DIR_MERGE   = os.path.join(OUTPUT_DIR, "merge_input")
+DIR_RESULT  = os.path.join(OUTPUT_DIR, "merge_results")
+DIR_EGGNOG  = os.path.join(OUTPUT_DIR, "eggnog_out")
+DIR_LOGS    = os.path.join(OUTPUT_DIR, "logs")
 
 # ===========
 # FINAL RULE
@@ -105,11 +109,12 @@ DIR_LOGS   = os.path.join(OUTPUT_DIR, "logs")
 
 rule all:
     input:
+        # Final enriched GBK per sample
         expand(
-            os.path.join(DIR_MERGE,
-                "{sample}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb"),
+            os.path.join(DIR_MERGE, "{sample}_cured.gb"),
             sample=SAMPLES
         ),
+        # Reports and plots
         os.path.join(DIR_MERGE,  "hp_summary_report.tsv"),
         os.path.join(DIR_RESULT, "hp_reduction_plot.png"),
         os.path.join(DIR_RESULT, "article_ready_table.csv"),
@@ -147,6 +152,7 @@ rule annotate_bakta:
 
         shell(f"""
             docker run --rm \
+                -u $(id -u):$(id -g) \
                 -v "{FASTA_DIR}:/input:ro" \
                 -v "{DB_BAKTA}:/db:ro" \
                 -v "{params.outdir}:/output" \
@@ -187,6 +193,7 @@ rule annotate_prokka:
 
         shell(f"""
             docker run --rm \
+                -u $(id -u):$(id -g) \
                 -v "{FASTA_DIR}:/input:ro" \
                 -v "{DIR_PROKKA}:/output" \
                 {IMG_PROKKA} \
@@ -225,8 +232,15 @@ rule annotate_dfast:
         os.makedirs(DIR_DFAST, exist_ok=True)
         os.makedirs(os.path.dirname(log[0]), exist_ok=True)
 
+        # Pre-create output dir so DFAST (non-root) can write into it
+        outdir = os.path.join(params.tmpdir, wildcards.sample + "_dfast")
+        os.makedirs(outdir, exist_ok=True)
+
         shell(f"""
+            set -euo pipefail
+
             docker run --rm \
+                -u $(id -u):$(id -g) \
                 -v "{FASTA_DIR}:/input:ro" \
                 -v "{params.tmpdir}:/output" \
                 -v "{DB_DFAST}:/dfast_core/db:ro" \
@@ -235,19 +249,36 @@ rule annotate_dfast:
                 --genome "/input/{{wildcards.sample}}.fasta" \
                 --out "/output/{{wildcards.sample}}_dfast" \
                 --cpu {threads} \
+                --force \
             > {{log[0]}} 2>&1
         """)
 
+        # SAFE EXTRACTION
         shell(f"""
-            GBK=$(find {params.tmpdir}/{{wildcards.sample}}_dfast \
-                  -maxdepth 2 -name "genome.gbk" | head -n 1)
-            cp "$GBK" {{output.gbk}}
-            rm -rf {params.tmpdir}/{{wildcards.sample}}_dfast
+            set -euo pipefail
+
+            TARGET="{params.tmpdir}/{{wildcards.sample}}_dfast"
+
+            if [ ! -d "$TARGET" ]; then
+                echo "ERROR: DFAST output directory not found"
+                exit 1
+            fi
+
+            GBK=$(find "$TARGET" -maxdepth 2 -name "genome.gbk" | head -n 1)
+
+            if [ -z "$GBK" ]; then
+                echo "ERROR: genome.gbk not found"
+                exit 1
+            fi
+
+            cp "$GBK" "{{output.gbk}}"
+
+            rm -rf "$TARGET"
         """)
 
 
 # =======
-# PATRIC 
+# PATRIC
 # =======
 
 rule annotate_patric:
@@ -271,7 +302,7 @@ rule annotate_patric:
         with open(inner, "w") as f:
             f.write(textwrap.dedent(f"""
                 #!/bin/bash
-                set -euo pipefail
+                set -euxo pipefail
                 USERNAME="{PATRIC_USER}"
                 PASSWORD="{PATRIC_PASS}"
                 TAXID="{PATRIC_TAXID}"
@@ -324,6 +355,8 @@ rule annotate_patric:
 
         shell(f"""
             docker run --rm \
+                -u $(id -u):$(id -g) \
+                -e HOME=/jobs \
                 -v "{FASTA_DIR}:/input:ro" \
                 -v "{DIR_PATRIC}:/output" \
                 -v "{params.jobs_dir}:/jobs" \
@@ -369,15 +402,12 @@ rule run_merge:
         expand(os.path.join(DIR_MERGE, "{sample}_prokka.gbk"), sample=SAMPLES),
         expand(os.path.join(DIR_MERGE, "{sample}_dfast.gbk"),  sample=SAMPLES)
     output:
-        report    = os.path.join(DIR_MERGE,  "hp_summary_report.tsv"),
-        hp_plot   = os.path.join(DIR_RESULT, "hp_reduction_plot.png"),
-        art_table = os.path.join(DIR_RESULT, "article_ready_table.csv"),
-        finals    = expand(
+        finals = expand(
             os.path.join(DIR_MERGE,
                 "{sample}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb"),
             sample=SAMPLES
         ),
-        xlsx      = expand(
+        xlsx = expand(
             os.path.join(DIR_RESULT, "{sample}", "annotation_comparison_report.xlsx"),
             sample=SAMPLES
         )
@@ -385,7 +415,7 @@ rule run_merge:
     resources:
         mem_mb = MEM_MB
     log:
-        os.path.join(DIR_LOGS, "merge", "pipeline.log")
+        os.path.join(DIR_LOGS, "merge", "merge.log")
     run:
         import os
         os.makedirs(DIR_RESULT, exist_ok=True)
@@ -393,6 +423,147 @@ rule run_merge:
 
         shell(f"""
             docker run --rm \
+                -u $(id -u):$(id -g) \
+                -v "{DIR_MERGE}:/data" \
+                -v "{DIR_RESULT}:/results" \
+                {IMG_MERGE} \
+                -i /data \
+                -o /results \
+                -t {threads} \
+                --min-pident {MERGE_MIN_PIDENT} \
+                --min-qcov   {MERGE_MIN_QCOV} \
+                --jobs       {MERGE_JOBS} \
+            > {{log[0]}} 2>&1
+        """)
+
+
+# ===========
+# EXTRACT CDS
+# ===========
+
+rule extract_cds:
+    input:
+        finalversion = os.path.join(DIR_MERGE,
+            "{sample}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb")
+    output:
+        faa = os.path.join(DIR_EGGNOG, "{sample}_proteins.faa")
+    log:
+        os.path.join(DIR_LOGS, "eggnog", "{sample}_extract.log")
+    run:
+        import os
+        os.makedirs(DIR_EGGNOG, exist_ok=True)
+        os.makedirs(os.path.dirname(log[0]), exist_ok=True)
+
+        shell(f"""
+            docker run --rm \
+                -u $(id -u):$(id -g) \
+                -v "{DIR_MERGE}:/data:ro" \
+                -v "{DIR_EGGNOG}:/output" \
+                --entrypoint python \
+                {IMG_MERGE} \
+                /app/cds_extract.py \
+                    /data/{{wildcards.sample}}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb \
+                    /output/{{wildcards.sample}}_proteins.faa \
+                    --formato completo \
+            > {{log[0]}} 2>&1
+        """)
+
+
+# ==========
+# RUN EGGNOG
+# ==========
+
+rule run_eggnog:
+    input:
+        faa = os.path.join(DIR_EGGNOG, "{sample}_proteins.faa")
+    output:
+        annotations = os.path.join(DIR_EGGNOG,
+            "{sample}_eggnog.emapper.annotations")
+    threads: THREADS
+    resources:
+        mem_mb = MEM_MB
+    log:
+        os.path.join(DIR_LOGS, "eggnog", "{sample}_eggnog.log")
+    run:
+        import os
+        os.makedirs(DIR_EGGNOG, exist_ok=True)
+
+        shell(f"""
+            docker run --rm \
+                -u $(id -u):$(id -g) \
+                -v "{DIR_EGGNOG}:/input" \
+                -v "{DIR_EGGNOG}:/output" \
+                -v "{DB_EGGNOG}:/eggnog_db:ro" \
+                {IMG_EGGNOG} \
+                emapper.py \
+                    -i /input/{{wildcards.sample}}_proteins.faa \
+                    --itype proteins \
+                    -m {EGGNOG_SENSMODE} \
+                    --data_dir /eggnog_db \
+                    --output {{wildcards.sample}}_eggnog \
+                    --output_dir /output \
+                    --cpu {threads} \
+                    --override \
+            > {{log[0]}} 2>&1
+        """)
+
+
+# ===========
+# RUN ENRICH
+# ===========
+
+rule run_enrich:
+    input:
+        finalversion = os.path.join(DIR_MERGE,
+            "{sample}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb"),
+        annotations  = os.path.join(DIR_EGGNOG,
+            "{sample}_eggnog.emapper.annotations")
+    output:
+        cured = os.path.join(DIR_MERGE, "{sample}_cured.gb")
+    log:
+        os.path.join(DIR_LOGS, "eggnog", "{sample}_enrich.log")
+    run:
+        import os
+
+        shell(f"""
+            docker run --rm \
+                -u $(id -u):$(id -g) \
+                -v "{DIR_MERGE}:/data" \
+                -v "{DIR_EGGNOG}:/eggnog" \
+                --entrypoint python \
+                {IMG_MERGE} \
+                /app/enrich_gbk_with_eggnog.py \
+                    -g /data/{{wildcards.sample}}_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb \
+                    -e /eggnog/{{wildcards.sample}}_eggnog.emapper.annotations \
+                    -o /data/{{wildcards.sample}}_cured.gb \
+            > {{log[0]}} 2>&1
+        """)
+
+
+# =============
+# FINAL REPORTS
+# =============
+
+rule run_reports:
+    input:
+        expand(os.path.join(DIR_MERGE, "{sample}_cured.gb"), sample=SAMPLES)
+    output:
+        report    = os.path.join(DIR_MERGE,  "hp_summary_report.tsv"),
+        hp_plot   = os.path.join(DIR_RESULT, "hp_reduction_plot.png"),
+        art_table = os.path.join(DIR_RESULT, "article_ready_table.csv")
+    threads: THREADS
+    resources:
+        mem_mb = MEM_MB
+    log:
+        os.path.join(DIR_LOGS, "merge", "reports.log")
+    run:
+        import os
+        os.makedirs(DIR_RESULT, exist_ok=True)
+        os.makedirs(os.path.dirname(log[0]), exist_ok=True)
+
+        shell(f"""
+            docker run --rm \
+                -u $(id -u):$(id -g) \
                 -v "{DIR_MERGE}:/data" \
                 -v "{DIR_RESULT}:/results" \
                 {IMG_MERGE} \
