@@ -51,7 +51,7 @@ All tools run **inside Docker containers**.
 
 2. **Comparison** — An all-vs-all BLASTp comparison is performed between the CDS from all four tools per genome.
 
-3. **Merge** — Functional annotations from Bakta, Prokka, and DFAST are transferred to BV-BRC CDS entries labeled as `hypothetical protein`, using strict full-length alignment criteria (identical alignment length and CDS length for both query and subject, no frameshifts).
+3. **Merge** — Functional annotations from Bakta, Prokka, eggNOG and DFAST are transferred to BV-BRC CDS entries labeled as `hypothetical protein`, using strict full-length alignment criteria (identical alignment length and CDS length for both query and subject, no frameshifts).
 
 4. **Defense systems** — Defense-related notes from DFAST are additionally transferred via 1:1 perfect BLASTp matches.
 
