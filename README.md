@@ -184,7 +184,7 @@ In the Merge tab, the user can configure the parameters to consider the products
 
 In the execution tab, the user can run their analysis and monitor processing in real time through the Logs area. 
 
-<img src="image/fig04.png" alt="Window1" width="800" height="600" />  
+<img src="image/figure4.png" alt="Window1" width="800" height="600" />  
 
 ---
 # Advanced mode
