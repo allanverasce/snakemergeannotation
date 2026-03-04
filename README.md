@@ -167,6 +167,7 @@ docker run --rm \
 
 # Basic mode
 <p align="justify">To open the main window of the SnakeMergeAnnotation interface, please go ahead and execute the line below. After that, open your preferred internet browser and enter the URL http://localhost:5000 into the address bar.</p>
+
 To start basic mode, run the following command:
 
 ```
