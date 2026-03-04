@@ -112,26 +112,7 @@ pip install snakemake
 pip install snakemake-executor-plugin-slurm
 ```
 
-### 3. Pull or build Docker images
-
-**Option A — Pull from Docker Hub (recommended):**
-```bash
-docker pull engbio/bakta:v1
-docker pull engbio/prokka:v1
-docker pull engbio/dfast:v1
-docker pull engbio/patric:v1
-docker pull engbio/merge:v1
-```
-
-**Option B — Build locally:**
-```bash
-# Build only the merge image (the others are available on Docker Hub)
-cd dockermerge
-docker build -t engbio/merge:v1 .
-cd ..
-```
-
-### 4. Download databases
+### 3. Download databases
 
 **Bakta database (light ~3.9 GB or full ~84 GB):**
 ```bash
