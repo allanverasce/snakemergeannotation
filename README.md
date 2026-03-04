@@ -172,7 +172,7 @@ To start basic mode, run the following command:
 docker rm -f snakemergeannotation && docker run -d   --name snakemergeannotation   -p 5000:5000   -v /var/run/docker.sock:/var/run/docker.sock   engbio/inteface_snakemergeannotation:v1
 ```
 
-<p align="justify">To open the main window of the SnakeMergeAnnotation interface, open your preferred internet browser and enter the `URL http://localhost:5000  into the address bar.</p>
+<p align="justify">To open the main window of the SnakeMergeAnnotation interface, open your preferred internet browser and enter the URL http://localhost:5000  into the address bar.</p>
 
 The main window will be displayed as shown in the figure below.
 
