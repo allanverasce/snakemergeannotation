@@ -47,15 +47,27 @@ All tools run **inside Docker containers**.
 
 ## How It Works
 
-1. **Annotation** — Each genome is annotated independently by Bakta, Prokka, DFAST, and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
+1. **Annotation** — Each genome is annotated independently by Bakta, Prokka, DFAST, eggNOG and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
 
-2. **Comparison** — An all-vs-all BLASTp comparison is performed between the CDS from all four tools per genome.
+2. **Comparison** — An all-vs-all BLASTp comparison is performed between the CDS from all tools per genome.
 
 3. **Merge** — Functional annotations from Bakta, Prokka, eggNOG and DFAST are transferred to BV-BRC CDS entries labeled as `hypothetical protein`, using strict full-length alignment criteria (identical alignment length and CDS length for both query and subject, no frameshifts).
 
 4. **Defense systems** — Defense-related notes from DFAST are additionally transferred via 1:1 perfect BLASTp matches.
 
-5. **Reports** — Per-genome Excel reports, HP reduction plots, and an article-ready summary table are generated automatically.
+5. **Additional Resources in the Final Annotation:**
+The consolidated annotation is enriched with the following information:
+- Gene symbols
+- EC numbers (enzyme classification)
+- GO terms (gene ontologies)
+- KEGG Orthology (KO)
+- KEGG Pathways
+- KEGG Reactions
+- KEGG rclass
+- BRITE hierarchies
+- PFAM domains
+  
+6. **Reports** — Per-genome Excel reports, HP reduction plots, and an article-ready summary table are generated automatically.
 
 ---
 
