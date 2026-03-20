@@ -155,7 +155,7 @@ python app.py
 
 The main window will be displayed as shown in the figure below.
 
-<img src="screen/fig01.png" alt="Window1" width="800" height="600" />  
+<img src="screen/main.png" alt="Window1" width="800" height="600" />  
 
 **Figure from the SnakeMergeAnnotation main window**
 
