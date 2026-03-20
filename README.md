@@ -165,11 +165,11 @@ The main window will be displayed as shown in the figure below.
 
 In the Merge tab, the user can configure the parameters to consider the products that are candidates for automatic curation. 
 
-<img src="screen/fig03.png" alt="Window1" width="800" height="600" />  
+<img src="screen/merge.png" alt="Window1" width="800" height="600" />  
 
 In the execution tab, the user can run their analysis and monitor processing in real time through the Logs area. 
 
-<img src="screen/Figure4.png" alt="Window1" width="800" height="600" />  
+<img src="screen/execution.png" alt="Window1" width="800" height="600" />  
 
 ---
 # Advanced mode
