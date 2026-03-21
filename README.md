@@ -446,6 +446,7 @@ merge:
 
 If you use SnakeMergeAnnotation in your research, please cite the underlying tools:
 
+- **PGAP:** Tatiana et al. (2016) *Nucleic acids research*. https://doi.org/10.1093/nar/gkw569
 - **Bakta:** Schwengers et al. (2021) *Microbial Genomics*. https://doi.org/10.1099/mgen.0.000685
 - **Prokka:** Seemann (2014) *Bioinformatics*. https://doi.org/10.1093/bioinformatics/btu153
 - **DFAST:** Tanizawa et al. (2018) *Bioinformatics*. https://doi.org/10.1093/bioinformatics/btx713
