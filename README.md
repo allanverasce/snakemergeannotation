@@ -171,8 +171,8 @@ In the execution tab, the user can run their analysis and monitor processing in 
 <p align="center">
 <img src="screen/execution.png" alt="Window1" width="700" height="700" />  
 </p>
----
 
+---
 # Advanced mode
 
 ## Configuration
