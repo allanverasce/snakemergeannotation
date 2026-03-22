@@ -24,6 +24,7 @@ SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, B
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Basic Mode](#Basicmode)
+- [Advanced mode](#Advancedmode)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Output Structure](#output-structure)
