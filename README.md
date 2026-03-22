@@ -154,9 +154,9 @@ python app.py
 <p align="justify">To open the main window of the SnakeMergeAnnotation interface, open your preferred internet browser and enter the URL http://localhost:5000  into the address bar.</p>
 
 The main window will be displayed as shown in the figure below.
-
+<p align="center">
 <img src="screen/main.png" alt="Window1" width="800" height="600" />  
-
+</p>
 **Figure from the SnakeMergeAnnotation main window**
 
 <p align="justify">The following image is from the second tab, called annotators, where the user can configure each annotation tool according to the type of organism being analyzed. It is important to enter the full path of the previously downloaded databases and, in the specific case of the Patric tool, the user must register to obtain the platform username and password.</p>
@@ -164,13 +164,13 @@ The main window will be displayed as shown in the figure below.
 <img src="screen/annotators.png" alt="Window1" width="700" height="1200" />  
 </p>
 In the Merge tab, the user can configure the parameters to consider the products that are candidates for automatic curation. 
-
+<p align="center">
 <img src="screen/merge.png" alt="Window1" width="700" height="600" />  
-
+</p>
 In the execution tab, the user can run their analysis and monitor processing in real time through the Logs area. 
-
+<p align="center">
 <img src="screen/execution.png" alt="Window1" width="700" height="600" />  
-
+</p>
 ---
 # Advanced mode
 
