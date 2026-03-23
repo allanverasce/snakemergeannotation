@@ -1,0 +1,61 @@
+paths:
+  fasta_dir: /home/veras/paraTestar
+  output_dir: /home/veras/paraTestar/results
+general:
+  threads: 18
+resources:
+  mem_mb: 20000
+  max_jobs: 2
+bakta:
+  enabled: true
+  docker_image: engbio/bakta:v1
+  db_path: /home/veras/UFPA/projetos/ProjetoSnakeMergeAnnotation/db-light
+  db_type: light
+  genus: Exiguobacterium
+  species: Exiguobacterium
+  strain: antarcticum
+  gram: +
+  translation_table: 11
+  min_contig_length: 100
+  compliant: false
+prokka:
+  enabled: true
+  docker_image: engbio/prokka:v1
+  genus: Exiguobacterium
+  kingdom: Bacteria
+  gcode: 11
+dfast:
+  enabled: true
+  docker_image: engbio/dfast:v1
+  db_path: /home/veras/UFPA/projetos/ProjetoSnakeMergeAnnotation/dfast_db
+  organism: Exiguobacterium
+patric:
+  enabled: true
+  docker_image: engbio/patric:v1
+  username: allanverasce
+  password: '@biotec100'
+  taxonomy_id: 132920
+  description: Bacteria
+  workspace_output_dir: home
+  monitor_interval: 60
+eggnog:
+  enabled: true
+  docker_image: quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1
+  db_path: /home/veras/eggnog_data
+  sensmode: diamond
+pgap:
+  enabled: true
+  script_path: pgap.py
+  mem: 18g
+  cpus: 18
+  extra_args: --ignore-all-errors
+  species: Exiguobacterium
+merge:
+  docker_image: engbio/merge:v1
+  min_pident: 95
+  min_qcov: 0.9
+  jobs: 5
+watchdog:
+  max_retries: 3
+  inactivity_timeout: 180m
+  check_interval: 60s
