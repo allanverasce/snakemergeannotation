@@ -132,7 +132,7 @@ docker run --rm \
 docker run --rm \
     -v "/path/to/databases/dfast_db:/dfast_core/db" \
     engbio/dfast:v1 \
-    python /dfast_core/scripts/file_downloader.py --protein dfast_default
+    python /dfast_core/scripts/file_downloader.py --protein dfast
 
 # COG/CDD database
 docker run --rm \
@@ -144,7 +144,7 @@ docker run --rm \
 docker run --rm \
     -v "/path/to/databases/dfast_db:/dfast_core/db" \
     engbio/dfast:v1 \
-    python /dfast_core/scripts/file_downloader.py --hmm TIGRFAMs
+    python /dfast_core/scripts/file_downloader.py --hmm TIGR
 ```
 
 # Basic mode
