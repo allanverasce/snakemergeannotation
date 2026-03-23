@@ -38,10 +38,11 @@ SnakeMergeAnnotation orchestrates four annotation tools (Bakta, Prokka, DFAST, B
 ## Overwiew
 ### Main processing steps of the SnakeMergeAnnotation Pipeline
 
-<div style="display: grid; grid-template-columns: repeat(2, auto); justify-content: center; gap: 20px;">
+<p align="center">
   <img src="screen/pipelinev3.png" alt="pipeline1" width="300" height="800">
-  <img src="screen/pipelineH.png" alt="pipelineF" width="300" height="800">
-</div>
+  &nbsp;&nbsp;&nbsp;
+  <img src="screen/pipelineG.png" alt="pipelineF" width="300" height="800">
+</p>
 
 All tools run **inside Docker containers**.
 
