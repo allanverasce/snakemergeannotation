@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Directory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            font-size: 15px;          
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #5a6e8a 0%, #7a8aa5 100%);
+            color: white;
+            padding: 20px 30px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 25px 30px;
+        }
+
+        .current-path {
+            background: #fafbfc;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            word-break: break-all;
+            margin-bottom: 20px;
+            border-left: 4px solid #6b8cae;
+            color: #4a5c74;
+        }
+
+        .parent-link {
+            margin-bottom: 20px;
+        }
+
+        .parent-link a {
+            color: #6b8cae;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .parent-link a:hover {
+            text-decoration: underline;
+            color: #8aa5c4;
+        }
+
+        .dir-list {
+            list-style: none;
+            margin: 20px 0;
+            border: 1px solid #e8ecf0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .dir-list li {
+            border-bottom: 1px solid #e8ecf0;
+        }
+
+        .dir-list li:last-child {
+            border-bottom: none;
+        }
+
+        .dir-list a {
+            display: block;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #4a5c74;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .dir-list a:hover {
+            background: #f5f7fa;
+            color: #6b8cae;
+        }
+
+        .dir-list a::before {
+            content: "📁 ";
+            font-size: 1.2rem;
+        }
+
+        .no-dirs {
+            padding: 20px;
+            text-align: center;
+            color: #8a9bb0;
+            font-style: italic;
+        }
+
+        .select-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #5a6e8a 0%, #7a8aa5 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 20px 0;
+        }
+
+        .select-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(90, 110, 138, 0.3);
+            background: linear-gradient(135deg, #4a5c74 0%, #5a6e8a 100%);
+        }
+
+        .select-btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6b8cae;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            color: #c97a7a;
+            background: #fef5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #f0d0d0;
+        }
+
+        .footer {
+            background: #fafbfc;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #8a9bb0;
+            border-top: 1px solid #e8ecf0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 Select a Directory</h1>
+            <p>Click on any folder to navigate, then click "Select This Directory"</p>
+        </div>
+        <div class="content">
+            <div class="current-path" id="currentPath">Loading...</div>
+            <div class="parent-link" id="parentLink"></div>
+            <div id="dirList" class="dir-list">
+                <div class="loading">Loading directories...</div>
+            </div>
+            <button class="select-btn" id="selectBtn">✔ Select This Directory</button>
+            <div id="errorMsg" class="error" style="display: none;"></div>
+        </div>
+        <div class="footer">
+            <p>SnakeMergeAnnotation - Directory Browser</p>
+        </div>
+    </div>
+
+    <script>
+        let currentPath = null;
+        const field = new URLSearchParams(window.location.search).get('field');
+
+        async function loadDirectory(path) {
+            try {
+                const response = await fetch('/api/browse/web', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: path })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    currentPath = data.current_path;
+                    document.getElementById('currentPath').innerText = currentPath;
+                    
+                    // Parent link
+                    const parentLinkDiv = document.getElementById('parentLink');
+                    if (data.parent_path && data.parent_path !== currentPath) {
+                        parentLinkDiv.innerHTML = `<a href="#" onclick="loadDirectory('${data.parent_path}'); return false;">⬆ Go up to: ${data.parent_path}</a>`;
+                    } else {
+                        parentLinkDiv.innerHTML = '';
+                    }
+                    
+                    // Directory list
+                    const dirList = document.getElementById('dirList');
+                    dirList.innerHTML = '';
+                    if (data.directories.length === 0) {
+                        dirList.innerHTML = '<div class="no-dirs">No subdirectories found</div>';
+                    } else {
+                        data.directories.forEach(dir => {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.innerText = dir.name;
+                            a.onclick = (e) => {
+                                e.preventDefault();
+                                loadDirectory(dir.path);
+                            };
+                            li.appendChild(a);
+                            dirList.appendChild(li);
+                        });
+                    }
+                    document.getElementById('errorMsg').style.display = 'none';
+                } else {
+                    showError(data.message);
+                }
+            } catch (err) {
+                showError('Failed to load directory: ' + err.message);
+            }
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+            document.getElementById('dirList').innerHTML = '<div class="no-dirs">Error loading directories</div>';
+        }
+
+        document.getElementById('selectBtn').onclick = async () => {
+            if (!currentPath) return;
+            
+            try {
+                // Send selection back to the parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'directory_selected',
+                        field: field,
+                        path: currentPath
+                    }, '*');
+                    window.close();
+                } else {
+                    // Fallback: send to server and close
+                    const response = await fetch('/api/browse/select', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ selected_path: currentPath, field: field })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Directory selected: ' + currentPath);
+                        window.close();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            } catch (err) {
+                alert('Error selecting directory: ' + err.message);
+            }
+        };
+
+        // Start with root or current directory? For better UX, start with /home or / (depending on field)
+        let startPath = '/';
+        // If field is for an output directory, maybe start with /home? Let's just start with root.
+        loadDirectory(startPath);
+    </script>
+</body>
+</html>
