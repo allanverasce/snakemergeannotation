@@ -1,9 +1,4 @@
 # SnakeMergeAnnotation
-
-<p align="center">
-  <img width="600" alt="logo_snakemergeannotation" src="https://github.com/user-attachments/assets/fed334b3-01c3-4d38-b17a-b3a278eacb2f" />
-</p>
-
 <p align="center">
   <img src="https://img.shields.io/badge/snakemake-≥9.0-brightgreen" alt="Snakemake">
   <img src="https://img.shields.io/badge/docker-required-blue" alt="Docker">
