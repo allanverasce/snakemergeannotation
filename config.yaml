@@ -1,6 +1,6 @@
 paths:
-  fasta_dir: /home/veras/hd_externo/walt
-  output_dir: /home/veras/hd_externo/walt/out
+  fasta_dir: FastaDir path
+  output_dir: outputDir path
 general:
   threads: 18
 resources:
@@ -9,7 +9,7 @@ resources:
 bakta:
   enabled: true
   docker_image: engbio/bakta:v1
-  db_path: /home/veras/UFPA/projetos/ProjetoSnakeMergeAnnotation/db-light
+  db_path: Database Path
   db_type: light
   genus: Streptomyces
   species: Streptomyces
@@ -27,13 +27,13 @@ prokka:
 dfast:
   enabled: true
   docker_image: engbio/dfast:v1
-  db_path: /home/veras/UFPA/projetos/ProjetoSnakeMergeAnnotation/dfast_db
+  db_path: Database Path
   organism: Streptomyces
 patric:
   enabled: true
   docker_image: engbio/patric:v1
-  username: allanverasce
-  password: '@biotec100'
+  username: your-username
+  password: 'password'
   taxonomy_id: 1883
   description: Bacteria
   workspace_output_dir: home
