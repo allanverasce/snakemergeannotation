@@ -141,6 +141,11 @@ docker run --rm \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --hmm TIGR
 ```
+**PGAP database:**
+```
+# To download PGAP locally, use the following command:
+python pgap.py --update
+```
 
 # Basic mode
 To start basic mode, run the following command:
