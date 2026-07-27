@@ -143,7 +143,7 @@ docker run --rm \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --hmm TIGR
 ```
-**PGAP database: In the software's root directory, run the following command to download the pgap database directly to your operating system user account**
+**PGAP database:** In the software's root directory, run the following command to download the pgap database directly to your operating system user account
 ```
 # To download PGAP locally, use the following command:
 python pgap.py --update
