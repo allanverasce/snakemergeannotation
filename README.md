@@ -344,25 +344,43 @@ snakemake --configfile config.yaml --cores 16 \
           --set-resources annotate_dfast:mem_mb=32000
 ```
 
+### Usage Examples to Genomics and Metagenomic Data 
+```
+# Genomics (isolate, with known taxonomy)
+All tools enabled, using PATRIC as the default:
+
+source $HOME/venv/bin/activate
+snakemake --configfile config.yaml \
+  --cores 20 \
+  --jobs 2 \
+  --resources mem_mb=20000 heavy_slots=1 light_slots=4 \
+  --keep-going \
+  --rerun-incomplete \
+  --latency-wait 60 \
+  --config base_tool=patric
+
+# If you prefer to use Bakta as the database even in genomic mode (to avoid relying on PATRIC's external login/service for the reference BLAST):
+ --config base_tool=bakta
+
+```
+
+```
+#Metagenomics (MAG/bin, unknown taxonomy)
+PATRIC and PGAP disabled, Bakta as the baseline
+
+source $HOME/venv/bin/activate
+
+snakemake --configfile config.yaml \
+  --cores 20 \
+  --jobs 2 \
+  --resources mem_mb=20000 heavy_slots=1 light_slots=4 \
+  --keep-going \
+  --rerun-incomplete \
+  --latency-wait 60 \
+  --config base_tool=bakta patric.enabled=false pgap.enabled=false
+```
+
 ---
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Output Structure
 
 ```
