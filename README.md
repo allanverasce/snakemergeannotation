@@ -100,7 +100,7 @@ A free account at [bv-brc.org](https://www.bv-brc.org) is required for the PATRI
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/SnakeMergeAnnotation.git
+git clone [https://github.com/your-username/SnakeMergeAnnotation.git](https://github.com/allanverasce/snakemergeannotation)
 cd SnakeMergeAnnotation
 ```
 
