@@ -69,7 +69,9 @@ The consolidated annotation is enriched with the following information:
   
 6. **Reports** — Per-genome Excel reports, HP reduction plots, and an article-ready summary table are generated automatically.
 
-7. **Note:** SnakeMergeannotation can be used for genomic or metagenomic data. Specifically for metagenomic data, the Patric and Pgap tools are disabled by default, since they require the user to specify the taxonomy; if the user already has this information, they can enable the tools at will.
+7. **Note:** SnakeMergeannotation can be used for genomic or metagenomic data. Specifically for metagenomic data, the Patric and Pgap tools are disabled by default, since they require the user to specify the taxonomy; if the user already has this information, they can enable the tools as desired. 
+- In the bakta tool, the fields “Genus,” “Strain,” and “Gram” must be set to “unknown.”
+- In the prokka tool, “Genus” must be set to “unknown,” and finally, “Dfast organism” must also be set to “unknown.”
 
 
 ---
