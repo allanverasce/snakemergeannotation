@@ -344,7 +344,7 @@ snakemake --configfile config.yaml --cores 16 \
           --set-resources annotate_dfast:mem_mb=32000
 ```
 
-### Usage Examples to Genomics and Metagenomic Data 
+### Usage Examples to Genomic and Metagenomic Data 
 ```
 # Genomics (isolate, with known taxonomy)
 All tools enabled, using PATRIC as the default:
