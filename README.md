@@ -45,6 +45,8 @@ All tools run **inside Docker containers**.
 
 ## How It Works
 
+<p align="justify"> The execution of the SnakeMergeAnnotation pipeline is customizable; therefore, the user can choose not to run some of the annotation modules. To do so, simply disable the tools directly in the graphical interface; if you are using the command-line version, you must specify the parameters to disable the desired tools. However, if the user wishes to run all modules, they must follow all the steps described, such as creating a username and password on the Patric platform.</p>
+
 1. **Annotation** — Each genome is annotated independently by Bakta, Prokka, DFAST, eggNOG and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
 
 2. **Comparison** — An all-vs-all BLASTp comparison is performed between the CDS from all tools per genome.
