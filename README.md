@@ -45,13 +45,13 @@ All tools run **inside Docker containers**.
 
 ## How It Works
 
-<p align="justify"> The execution of the SnakeMergeAnnotation pipeline is customizable; therefore, the user can choose not to run some of the annotation modules. To do so, simply disable the tools directly in the graphical interface; if you are using the command-line version, you must specify the parameters to disable the desired tools. However, if the user wishes to run all modules, they must follow all the steps described, such as creating a username and password on the Patric platform.</p>
+<p align="justify"> The execution of the SnakeMergeAnnotation pipeline is customizable.Therefore, the user can choose not to run some of the annotation modules, to do so, simply disable the tools directly in the graphical interface, if you are using the command-line version, you must specify the parameters to disable the desired tools. However, if the user wishes to run all modules, they must follow all the steps described, such as creating a username and password on the Patric platform. The process is divided into stages:</p>
 
-1. **Annotation** — Each genome is annotated independently by Bakta, Prokka, DFAST, eggNOG and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
+1. **Annotation** — Each genome is annotated independently by Bakta, Prokka, DFAST, eggNOG, Pgap and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
 
-2. **Comparison** — An all-vs-all BLASTp comparison is performed between the CDS from all tools per genome.
+2. **Comparison** — An “all-versus-all” BLASTp comparison is performed between the CDSs from all tools for each genome, using the result produced by the user-defined tool as the local reference.
 
-3. **Merge** — Functional annotations from Bakta, Prokka, eggNOG and DFAST are transferred to BV-BRC CDS entries labeled as `hypothetical protein`, using strict full-length alignment criteria (identical alignment length and CDS length for both query and subject, no frameshifts).
+3. **Merge** — The functional annotations from Bakta, Prokka, eggNOG, Pgap, and DFAST are transferred to the BV-BRC CDS entries labeled as `hypothetical protein`, using strict full-length alignment criteria (i.e., the alignment length must equal the CDS length) and the user-defined minimum identity percentage.
 
 4. **Defense systems** — Defense-related notes from DFAST are additionally transferred via 1:1 perfect BLASTp matches.
 
