@@ -1,0 +1,63 @@
+paths:
+  fasta_dir: /home/allan/projeto/input
+  output_dir: /home/allan/projeto/input/results
+general:
+  threads: 20
+resources:
+  mem_mb: 20000
+  max_jobs: 2
+bakta:
+  enabled: true
+  docker_image: engbio/bakta:v1
+  db_path: /home/allan/projeto/databases/db-light
+  db_type: light
+  genus: Streptomyces
+  species: Streptomyces
+  strain: Streptomyces
+  gram: +
+  translation_table: 11
+  min_contig_length: 100
+  compliant: false
+prokka:
+  enabled: true
+  docker_image: engbio/prokka:v1
+  genus: Streptomyces
+  kingdom: Bacteria
+  gcode: 11
+dfast:
+  enabled: true
+  docker_image: engbio/dfast:v1
+  db_path: /home/allan/projeto/databases/dfast_db
+  organism: Streptomyces
+patric:
+  enabled: false
+  docker_image: engbio/patric:v1
+  username: allanverasce
+  password: '@biotec100'
+  taxonomy_id: 1883
+  description: Bacteria
+  workspace_output_dir: home
+  monitor_interval: 60
+eggnog:
+  enabled: false
+  docker_image: quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1
+  db_path: /home/allan/projeto/databases/eggnog_data
+  sensmode: diamond
+pgap:
+  enabled: false
+  script_path: pgap.py
+  mem: 18g
+  cpus: 18
+  extra_args: --ignore-all-errors
+  species: Streptomyces
+merge:
+  docker_image: engbio/merge:v1
+  min_pident: 95
+  min_qcov: 0.9
+  jobs: 2
+watchdog:
+  max_retries: 3
+  inactivity_timeout: 2880m
+  check_interval: 60s
+base_tool: prokka
+mode: genomic
