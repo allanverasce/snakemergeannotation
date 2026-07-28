@@ -9,7 +9,7 @@
 
 > **Dockerized Snakemake pipeline for hypothetical protein curation in prokaryotic genomes.**
 
-SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGAP, eggNOG, and BV-BRC/PATRIC — in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins. It works for both **genomic** (isolate genomes with known taxonomy) and **metagenomic** (MAGs/bins with unknown taxonomy) data.
+<p align="justify"> SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGAP, eggNOG, and BV-BRC/PATRIC — in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins. It works for both **genomic** (isolate genomes with known taxonomy) and **metagenomic** (MAGs/bins with unknown taxonomy) data.</p>
 
 ---
 
