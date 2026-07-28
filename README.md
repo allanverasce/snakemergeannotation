@@ -67,7 +67,7 @@ If you're already familiar with Snakemake, Docker, and editing `.yaml` files, yo
 - [Citation](#citation)
 - [License](#license)
 
-For installation steps, configuration, usage, HPC/cloud execution, and merge pipeline parameters, see **[docs/quick-start-guide.md](docs/quick-start-guide.md)** and **[docs/advanced-guide.md](docs/advanced-guide.md)**.
+For installation steps, configuration, usage, and pipeline parameters, see **[docs/quick-start-guide.md](docs/quick-start-guide.md)** and **[docs/advanced-guide.md](docs/advanced-guide.md)**.
 
 ---
 
