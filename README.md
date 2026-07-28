@@ -18,8 +18,13 @@ SnakeMergeAnnotation orchestrates five annotation tools (Bakta, Prokka, DFAST, P
 You only need three steps:
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
-2. Install Snakemake: `pip install snakemake`
-3. Run:
+2. Set up the Python environment, for example.
+```
+python -m venv venv
+source /home/allan/venv/bin/activate
+```
+4. Install Snakemake: `pip install snakemake`
+5. Run:
    ```
    python app.py
    ```
