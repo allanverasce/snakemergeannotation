@@ -15,18 +15,28 @@ SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGA
 
 ##  New to bioinformatics or the command line? Start here
 
-You only need three steps:
+---
 
-1. Install [Docker](https://docs.docker.com/get-docker/)
-2. We recommend creating a Python environment to install the package versions. An example is shown below:
-**Replace with your username**
+## Requirements
+
+You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside Docker containers:
+
+| Dependency | Version | Install |
+|---|---|---|
+| **Docker** | ≥ 20.10 | <https://docs.docker.com/get-docker/> |
+| **Snakemake** | ≥ 9.0 | `pip install snakemake` |
+
+A free account at [bv-brc.org](https://www.bv-brc.org) is also required for the PATRIC annotation step.
+
+We recommend creating an isolated Python environment before installing Snakemake:
 ```
 python -m venv venv
-source /home/allan/venv/bin/activate
+source venv/bin/activate
 pip install snakemake
 ```
-3. Install Snakemake: `pip install snakemake`
-4. Go to the software directory,for example, `cd snakemergeannotation` and run the following command:Run:
+
+1. Install [Docker](https://docs.docker.com/get-docker/)
+2. Go to the software directory,for example, `cd snakemergeannotation` and run the following command:Run:
    ```
    python app.py
    ```
@@ -118,26 +128,6 @@ For metagenomic data specifically, the PATRIC and PGAP tools are **disabled by d
 - In **DFAST**, `organism` must also be set to `"unknown"`.
 
 Full command-line examples for both genomic and metagenomic runs: see **[docs/advanced-guide.md — Genomic vs. metagenomic usage examples](docs/advanced-guide.md#genomic-vs-metagenomic-usage-examples)**.
-
----
-
-## Requirements
-
-You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside Docker containers:
-
-| Dependency | Version | Install |
-|---|---|---|
-| **Docker** | ≥ 20.10 | <https://docs.docker.com/get-docker/> |
-| **Snakemake** | ≥ 9.0 | `pip install snakemake` |
-
-A free account at [bv-brc.org](https://www.bv-brc.org) is also required for the PATRIC annotation step.
-
-We recommend creating an isolated Python environment before installing Snakemake:
-```
-python -m venv venv
-source venv/bin/activate
-pip install snakemake
-```
 
 ---
 
