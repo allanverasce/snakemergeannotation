@@ -172,11 +172,13 @@ Full output folder structure: see **[docs/advanced-guide.md — Output Structure
 
 | Image | Base | Tool | Purpose |
 |---|---|---|---|
-| `engbio/bakta:v1` | oschwengers/bakta | Bakta ≥1.9 | Primary annotation |
-| `engbio/prokka:v1` | staphb/prokka | Prokka 1.14.6 | Secondary annotation |
+| `engbio/bakta:v1` | oschwengers/bakta | Bakta ≥1.9 | Annotation |
+| `engbio/prokka:v1` | staphb/prokka | Prokka 1.14.6 | SAnnotation |
 | `engbio/dfast:v1` | nigyta/dfast_core | DFAST 1.3.7 | Annotation + defense systems |
-| `engbio/patric:v1` | Ubuntu 20.04 + BV-BRC CLI | BV-BRC CLI 1.039 | Cloud-based annotation |
+| `engbio/patric:v1` | Ubuntu 20.04 + BV-BRC CLI | BV-BRC CLI 1.039 | Annotation |
 | `engbio/merge:v1` | python:3.11-slim + BLAST+ | Custom Python pipeline | Merge and HP reduction |
+| `quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1` | Annotation |
+| `ncbi/pgap:2026-06-18.build8602` | Annotation | 
 
 ---
 
