@@ -35,8 +35,7 @@ source venv/bin/activate
 pip install snakemake
 ```
 
-1. Install [Docker](https://docs.docker.com/get-docker/)
-2. Go to the software directory,for example, `cd snakemergeannotation` and run the following command:Run:
+Go to the software directory,for example, `cd snakemergeannotation` and run the following command:Run:
    ```
    python app.py
    ```
