@@ -9,75 +9,114 @@
 
 > **Dockerized Snakemake pipeline for hypothetical protein curation in prokaryotic genomes.**
 
-SnakeMergeAnnotation orchestrates five annotation tools (Bakta, Prokka, DFAST, PGAP, and BV-BRC/PATRIC) plus eggNOG in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins. It works for both **genomic** (isolate genomes with known taxonomy) and **metagenomic** (MAGs/bins with unknown taxonomy) data.
+SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGAP, eggNOG, and BV-BRC/PATRIC — in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins. It works for both **genomic** (isolate genomes with known taxonomy) and **metagenomic** (MAGs/bins with unknown taxonomy) data.
 
 ---
 
-## New to bioinformatics or the command line? Start here
+##  New to bioinformatics or the command line? Start here
 
 You only need three steps:
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
-2. Set up the Python environment, for example.
-```
-python -m venv venv
-source /home/allan/venv/bin/activate
-```
-4. Install Snakemake: `pip install snakemake`
-5. Go to the software directory—for example, `cd snakemergeannotation`—and inside it, run:
+2. Install Snakemake: `pip install snakemake`
+3. Run:
    ```
    python app.py
    ```
    then open `http://localhost:5000` in your browser.
 
-The interface will walk you through the configuration, tools, merge, and execution tabs, with real-time progress tracking through the logs. You can also turn individual annotation tools on or off directly in the interface, no command-line flags needed.
+The interface will walk you through the configuration, tools, merge, and execution tabs, with real-time progress tracking through the logs. You can also turn individual annotation tools on or off directly in the interface — no command-line flags needed.
 
 Full step-by-step guide with screenshots: **[docs/quick-start-guide.md](docs/quick-start-guide.md)**
 
 ---
 
-## Advanced mode (command line)
+##  Advanced mode (command line)
 
 If you're already familiar with Snakemake, Docker, and editing `.yaml` files, you can jump straight to manual execution via `config.yaml` and the command line — including genomic vs. metagenomic run examples and HPC/cloud execution.
 
-Full guide: **[docs/advanced-guide.md](docs/advanced-guide.md)**
+ Full guide: **[docs/advanced-guide.md](docs/advanced-guide.md)**
 
 ---
 
-## How it works (overview)
+## Table of Contents
 
-The pipeline is fully customizable: you can disable any annotation module you don't need (either via the graphical interface or with command-line flags). If you want to run every module, you'll need to complete all setup steps, including creating a username and password on the BV-BRC/PATRIC platform.
+- [Overview](#overview)
+- [How It Works](#how-it-works)
+- [Genomic vs. Metagenomic Data](#genomic-vs-metagenomic-data)
+- [Requirements](#requirements)
+- [Repository Structure](#repository-structure)
+- [Output Results](#output-results)
+- [Docker Images](#docker-images)
+- [Running Into Problems?](#running-into-problems)
+- [Technical Terms](#technical-terms)
+- [Citation](#citation)
+- [License](#license)
+
+For installation steps, configuration, usage, HPC/cloud execution, and merge pipeline parameters, see **[docs/quick-start-guide.md](docs/quick-start-guide.md)** and **[docs/advanced-guide.md](docs/advanced-guide.md)**.
+
+---
+
+## Overview
+
+### Main processing steps of the SnakeMergeAnnotation pipeline
 
 <p align="center">
-  <img src="screen/pipelinev3.png" alt="Pipeline overview diagram" width="300">
+  <img src="screen/pipelinev3.png" alt="pipeline1" width="300" height="800">
   &nbsp;&nbsp;&nbsp;
-  <img src="screen/pipelineH.png" alt="Pipeline horizontal diagram" width="300">
+  <img src="screen/pipelineH.png" alt="pipelineH" width="300" height="800">
 </p>
 
-1. **Annotation** — each genome is annotated independently by Bakta, Prokka, DFAST, PGAP, eggNOG, and BV-BRC (PATRIC). PATRIC submissions are handled in batch via the cloud API.
-2. **Comparison** — an all-vs-all BLASTp comparison is performed between the predicted proteins (CDS) from every tool for each genome, using the result from the user-defined base tool as the local reference.
-3. **Merge** — functional annotations from Bakta, Prokka, eggNOG, PGAP, and DFAST are transferred to entries labeled as "hypothetical protein" in the base annotation, using strict full-length alignment criteria (alignment length must equal CDS length) plus a user-defined minimum identity percentage.
-4. **Defense systems** — defense-related annotations from DFAST are also transferred via perfect 1:1 matches.
-5. **Final enrichment** — the consolidated annotation is enhanced with: gene symbols, EC numbers, GO terms, KEGG Orthology (KO), KEGG pathways, KEGG reactions, KEGG rclass, BRITE hierarchies, and PFAM domains.
-6. **Reports** — per-genome Excel reports, hypothetical-protein reduction plots, and an article-ready summary table are generated automatically.
+All tools run **inside Docker containers**.
 
-### Genomic vs. metagenomic data
+---
 
-SnakeMergeAnnotation can be used for both **genomic** and **metagenomic** data:
+## How It Works
 
-- For genomic data (isolate genomes with known taxonomy), all tools can be enabled, typically using PATRIC as the base tool.
-- For metagenomic data (MAGs/bins), PATRIC and PGAP are **disabled by default**, since both require taxonomy information you may not have. If you do know the taxonomy of your MAG, you can enable them manually.
-  - In **Bakta**, set `Genus`, `Strain`, and `Gram` to `unknown`.
-  - In **Prokka**, set `Genus` to `unknown`.
-  - In **DFAST**, set `organism` to `unknown`.
+<p align="justify">The execution of the SnakeMergeAnnotation pipeline is customizable. The user can choose not to run some of the annotation modules — simply disable the tools directly in the graphical interface, or, if using the command-line version, specify the parameters to disable the desired tools. However, if the user wishes to run all modules, they must follow every setup step described, such as creating a username and password on the PATRIC platform. The process is divided into stages:</p>
 
-See **[docs/advanced-guide.md](docs/advanced-guide.md#genomic-vs-metagenomic-usage-examples)** for full command examples of both modes.
+1. **Annotation** — each genome is annotated independently by Bakta, Prokka, DFAST, eggNOG, PGAP, and BV-BRC (PATRIC). BV-BRC submissions are handled in batch via the cloud API.
+
+2. **Comparison** — an "all-versus-all" BLASTp comparison is performed between the CDSs from all tools for each genome, using the result produced by the user-defined tool (`base_tool`) as the local reference.
+
+3. **Merge** — functional annotations from Bakta, Prokka, eggNOG, PGAP, and DFAST are transferred to the BV-BRC CDS entries labeled `hypothetical protein`, using strict full-length alignment criteria (the alignment length must equal the CDS length) and the user-defined minimum identity percentage.
+
+4. **Defense systems** — defense-related notes from DFAST are additionally transferred via 1:1 perfect BLASTp matches.
+
+5. **Additional resources in the final annotation** — the consolidated annotation is enriched with the following information:
+   - Gene symbols
+   - EC numbers (enzyme classification)
+   - GO terms (gene ontologies)
+   - KEGG Orthology (KO)
+   - KEGG Pathways
+   - KEGG Reactions
+   - KEGG rclass
+   - BRITE hierarchies
+   - PFAM domains
+
+6. **Reports** — per-genome Excel reports, HP reduction plots, and an article-ready summary table are generated automatically.
+
+7. **Note:** SnakeMergeAnnotation can be used for genomic or metagenomic data — see [Genomic vs. Metagenomic Data](#genomic-vs-metagenomic-data) below.
+
+---
+
+## Genomic vs. Metagenomic Data
+
+SnakeMergeAnnotation can be used for **genomic** or **metagenomic** data.
+
+For metagenomic data specifically, the PATRIC and PGAP tools are **disabled by default**, since both require the user to specify the taxonomy. If the user already has this information, the tools can be enabled as desired.
+
+- In **Bakta**, the fields `Genus`, `Strain`, and `Gram` must be set to `"unknown"`.
+- In **Prokka**, `Genus` must be set to `"unknown"`.
+- In **DFAST**, `organism` must also be set to `"unknown"`.
+
+Full command-line examples for both genomic and metagenomic runs: see **[docs/advanced-guide.md — Genomic vs. metagenomic usage examples](docs/advanced-guide.md#genomic-vs-metagenomic-usage-examples)**.
 
 ---
 
 ## Requirements
 
-You only need to install two things on your machine — everything else runs inside Docker containers:
+You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside Docker containers:
 
 | Dependency | Version | Install |
 |---|---|---|
@@ -95,7 +134,7 @@ pip install snakemake
 
 ---
 
-## Repository structure
+## Repository Structure
 
 ```
 snakemergeannotation/
@@ -117,7 +156,7 @@ snakemergeannotation/
 
 ---
 
-## Output results
+## Output Results
 
 At the end of the run, the most important files are automatically highlighted in `output_dir/README.txt`. The main ones are:
 
@@ -125,21 +164,33 @@ At the end of the run, the most important files are automatically highlighted in
 |---|---|
 | `*_finalversion.gb` | Final enriched GenBank file — main result |
 | `annotation_comparison_report.xlsx` | BLASTp comparison across all tools |
-| `hp_summary_report.tsv` | Hypothetical protein counts at each merge step |
-| `article_ready_table.csv` | Summary table ready for publication |
-| `*_hp_reduction.png` | Hypothetical protein reduction curve per genome |
+| `hp_summary_report.tsv` | HP counts at each merge step |
+| `article_ready_table.csv` | Summary table with % reduction per genome |
+| `*_hp_reduction.png` | HP reduction curve per genome |
 
-Full output folder structure: see **[docs/advanced-guide.md](docs/advanced-guide.md#output-structure)**.
+Full output folder structure: see **[docs/advanced-guide.md — Output Structure](docs/advanced-guide.md#output-structure)**.
 
 ---
 
-## Running into problems?
+## Docker Images
+
+| Image | Base | Tool | Purpose |
+|---|---|---|---|
+| `engbio/bakta:v1` | oschwengers/bakta | Bakta ≥1.9 | Primary annotation |
+| `engbio/prokka:v1` | staphb/prokka | Prokka 1.14.6 | Secondary annotation |
+| `engbio/dfast:v1` | nigyta/dfast_core | DFAST 1.3.7 | Annotation + defense systems |
+| `engbio/patric:v1` | Ubuntu 20.04 + BV-BRC CLI | BV-BRC CLI 1.039 | Cloud-based annotation |
+| `engbio/merge:v1` | python:3.11-slim + BLAST+ | Custom Python pipeline | Merge and HP reduction |
+
+---
+
+## Running Into Problems?
 
 Check **[docs/troubleshooting.md](docs/troubleshooting.md)** before opening an issue — most common errors (incorrect paths, missing databases, insufficient memory) are already documented there.
 
 ---
 
-## Technical terms
+## Technical Terms
 
 If you come across unfamiliar terms or acronyms (CDS, BLASTp, frameshift, MAG, etc.), check the **[glossary](docs/glossary.md)**.
 
@@ -147,7 +198,7 @@ If you come across unfamiliar terms or acronyms (CDS, BLASTp, frameshift, MAG, e
 
 ## Citation
 
-If you use SnakeMergeAnnotation in your research, please also cite the underlying tools:
+If you use SnakeMergeAnnotation in your research, please cite the underlying tools:
 
 - **PGAP:** Tatiana et al. (2016) *Nucleic Acids Research*. <https://doi.org/10.1093/nar/gkw569>
 - **Bakta:** Schwengers et al. (2021) *Microbial Genomics*. <https://doi.org/10.1099/mgen.0.000685>
@@ -160,4 +211,4 @@ If you use SnakeMergeAnnotation in your research, please also cite the underlyin
 
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE) for details.
+AGPL-3.0 license — see [LICENSE](LICENSE) for details.
