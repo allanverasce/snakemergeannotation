@@ -48,7 +48,11 @@ Full guide: **[docs/advanced-guide.md](docs/advanced-guide.md)**
 5. **Final enrichment** — the consolidated annotation is enhanced with: gene symbols, EC numbers, GO terms, KEGG Orthology (KO), KEGG pathways, KEGG rclass, BRITE hierarchies, and PFAM domains.
 6. **Reports** — per-genome Excel reports, hypothetical-protein reduction plots, and an article-ready summary table are generated automatically.
 
-![Pipeline overview](screen/pipelinev3.png)
+<p align="center">
+  <img src="screen/pipelinev3.png" alt="pipeline1" width="300" height="800">
+  &nbsp;&nbsp;&nbsp;
+  <img src="screen/pipelineH.png" alt="pipelineH" width="300" height="800">
+</p>
 
 ---
 
