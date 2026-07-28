@@ -267,7 +267,7 @@ output_dir/
 │   ├── <genome>_patric_bakta_UPDATED.gb     after Bakta merge
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED.gb
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_UPDATED.gb
-│   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversiongb 
+│   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb (defense islands) 
 │   ├── <genome>_cured.gb  ◀ FINAL
 │   └── hp_summary_report.tsv                consolidated HP reduction table
 │
