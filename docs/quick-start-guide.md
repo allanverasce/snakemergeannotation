@@ -9,13 +9,22 @@ This guide is for anyone **with no command-line experience** who wants to use Sn
 - Your genome files in `.fasta`, `.fa`, or `.fna` format
 - A free account at [bv-brc.org](https://www.bv-brc.org) — only needed if you plan to use the PATRIC tool
 
-No programming knowledge or terminal use is required beyond the installation step below.
+No programming knowledge or terminal use is required beyond the installation steps below.
 
 ---
 
-## Step 1 — Install the prerequisites
+## Step 1 — Get the project files
 
 Open a terminal (Command Prompt on Windows; Terminal on Mac/Linux) and run:
+
+```bash
+git clone https://github.com/allanverasce/snakemergeannotation.git
+cd SnakeMergeAnnotation
+```
+
+## Step 2 — Install the prerequisites
+
+In the same terminal, run:
 
 ```
 pip install snakemake
@@ -23,99 +32,97 @@ pip install snakemake
 
 Also make sure Docker is installed and running (you'll see the Docker "whale" icon active in your taskbar/menu bar).
 
-## Step 2 — Download the databases
+## Step 3 — Download the databases
 
 The annotation tools need reference databases. This only needs to be done once, and you only need to download databases for the tools you actually plan to use.
 
-**Bakta database** (light version, ~3.9 GB, recommended):
-```
+**Bakta database** (light version, ~3.9 GB, recommended for most use cases; a full ~84 GB version is also available):
+```bash
 docker run --rm \
     -v "/path/to/databases/bakta_db:/db" \
     engbio/bakta:v1 \
     bakta_db --output /db download --type light
 ```
 
-**DFAST database** (~15 GB total):
-```
+**DFAST database** (~15 GB total — protein reference, COG/CDD, and TIGRFAMs HMM databases):
+```bash
+# Protein reference database
 docker run --rm \
     -v "/path/to/databases/dfast_db:/dfast_core/db" \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --protein dfast
 
+# COG/CDD database
 docker run --rm \
     -v "/path/to/databases/dfast_db:/dfast_core/db" \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --cdd Cog
 
+# TIGRFAMs HMM database
 docker run --rm \
     -v "/path/to/databases/dfast_db:/dfast_core/db" \
     engbio/dfast:v1 \
     python /dfast_core/scripts/file_downloader.py --hmm TIGR
 ```
 
-**PGAP database:** from the software's root directory, run:
-```
+**PGAP database:** from the software's root directory, run the following command to download the PGAP database directly to your operating system user account:
+```bash
 python pgap.py --update
 ```
-This downloads the PGAP database directly to your operating system user account.
 
-> Tip: write down the full path where you saved these databases — you'll need it in Step 4. If you're working with metagenomic data (see [below](#genomic-data-vs-metagenomic-data)), you may not need PATRIC or PGAP at all, and can skip those downloads.
+> Tip: write down the full path where you saved these databases — you'll need it in Step 5. If you're working with metagenomic data (see [below](#genomic-data-vs-metagenomic-data)), you may not need PATRIC or PGAP at all, and can skip those downloads.
 
-## Step 3 — Open the interface
+## Step 4 — Open the interface
 
-From the terminal, inside the project folder, run:
+To start basic mode, from the terminal, inside the project folder, run:
 
 ```
 python app.py
 ```
 
-Open your browser (Chrome, Firefox, etc.) and go to:
+To open the main window of the SnakeMergeAnnotation interface, open your preferred internet browser and enter the URL `http://localhost:5000` into the address bar.
 
-```
-http://localhost:5000
-```
-
-The main window looks like this:
+The main window will be displayed as shown in the figure below.
 
 <p align="center">
-<img src="../screen/Fig1.png" alt="SnakeMergeAnnotation main window" width="800">
+<img src="../screen/Fig1.png" alt="Window1" width="800" height="600">
 </p>
 
-## Step 4 — Fill in the tabs
+**Figure from the SnakeMergeAnnotation main window**
+
+## Step 5 — Fill in the tabs
 
 The interface has four main tabs:
 
-1. **Home** — set the folder containing your genome files and the folder where results will be saved.
+**1. Home** — set the folder containing your genome files and the folder where results will be saved.
 
-2. **Tools** — configure each annotation tool (Bakta, Prokka, DFAST, PGAP, PATRIC) according to the type of organism being analyzed. This is where you enter the full path to the databases you downloaded in Step 2. For PATRIC, enter your bv-brc.org username and password. **You can turn any tool on or off here** — simply disable the ones you don't want to run.
+**2. Tools** — the following image is from the second tab, called *Tools*, where the user can configure each annotation tool according to the type of organism being analyzed. It is important to enter the full path of the previously downloaded databases and, in the specific case of the PATRIC tool, the user must register to obtain the platform username and password. **You can also turn any tool on or off here** — simply disable the ones you don't want to run.
 
-   <p align="center">
-   <img src="../screen/Fig2.png" alt="Tools configuration tab" width="700">
-   </p>
+<p align="center">
+<img src="../screen/Fig2.png" alt="Window1" width="700" height="1200">
+</p>
 
-3. **Merge** — set the criteria for how similar two proteins need to be to be considered "the same" across different tools, and which products are candidates for automatic curation. If you're not sure, leave the default values.
+**3. Merge** — in the Merge tab, the user can configure the parameters to consider which products are candidates for automatic curation.
 
-   <p align="center">
-   <img src="../screen/Fig3.png" alt="Merge configuration tab" width="700">
-   </p>
+<p align="center">
+<img src="../screen/Fig3.png" alt="Window1" width="700" height="600">
+</p>
 
-4. **Run** — click run and follow progress in real time through the Logs panel.
+**4. Run** — in the execution tab, the user can run their analysis and monitor processing in real time through the Logs area.
 
-   <p align="center">
-   <img src="../screen/Fig4.png" alt="Execution and logs tab" width="700">
-   </p>
+<p align="center">
+<img src="../screen/Fig4.png" alt="Window1" width="700" height="700">
+</p>
 
 ## Genomic data vs. metagenomic data
 
-SnakeMergeAnnotation works with two kinds of input:
+SnakeMergeAnnotation can be used for **genomic** or **metagenomic** data.
 
-- **Genomic data** — an isolate genome where you know the taxonomy (genus, species). In this case, you can enable all tools, including PATRIC.
-- **Metagenomic data** — a MAG (metagenome-assembled genome) or bin where the taxonomy is unknown. In this case:
-  - Disable **PATRIC** and **PGAP** in the Tools tab (both require taxonomy information).
-  - In **Bakta**, set `Genus`, `Strain`, and `Gram` to `unknown`.
-  - In **Prokka**, set `Genus` to `unknown`.
-  - In **DFAST**, set `organism` to `unknown`.
-  - If you *do* know the taxonomy of your MAG, you can enable PATRIC/PGAP and fill in the fields normally.
+- **Genomic data** — an isolate genome where you know the taxonomy (genus, species). In this case, you can enable all tools, including PATRIC and PGAP.
+- **Metagenomic data** — a MAG (metagenome-assembled genome) or bin where the taxonomy is unknown. For metagenomic data specifically, the **PATRIC** and **PGAP** tools are disabled by default, since both require the user to specify the taxonomy. If the user already has this information, the tools can be enabled as desired.
+  - In **Bakta**, the fields `Genus`, `Strain`, and `Gram` must be set to `"unknown"`.
+  - In **Prokka**, `Genus` must be set to `"unknown"`.
+  - In **DFAST**, `organism` must also be set to `"unknown"`.
 
 ## What to do once it's finished
 
