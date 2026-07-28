@@ -2,39 +2,39 @@
 # =============================================================================
 # install_dependencies.sh — SnakeMergeAnnotation
 # =============================================================================
-# Instala TODAS as dependências do pipeline:
-#   1. Docker (detecta o SO automaticamente)
-#   2. Docker sem sudo (grupo "docker", em Linux)
-#   3. Ambiente virtual Python (venv) + Snakemake
-#   4. Clone do repositório SnakeMergeAnnotation
-#   5. Bancos de dados: Bakta (light), DFAST (proteínas/COG/TIGRFAMs),
-#      eggNOG-mapper (versão mais recente estável) — tudo em /opt (Linux)
-#   6. PGAP: baixa o pgap.py e roda "pgap.py --update" (fica no HOME do
-#      usuário, como o próprio PGAP gerencia por padrão)
+# Installs ALL dependencies for the pipeline:
+#   1. Docker (automatically detects the OS)
+#   2. Docker without sudo ("docker" group, on Linux)
+#   3. Python virtual environment (venv) + Snakemake
+#   4. Clone the SnakeMergeAnnotation repository
+#   5. Databases: Bakta (light), DFAST (proteins/COG/TIGRFAMs),
+#      eggNOG-mapper (most recent stable version) — all under /opt (Linux)
+#   6. PGAP: downloads pgap.py and runs "pgap.py --update" (stays in the user's
+#      HOME, as PGAP itself manages by default)
 #
-# Uso:
+# Usage:
 #   chmod +x install_dependencies.sh
-#   ./install_dependencies.sh [opções]
+#   ./install_dependencies.sh [options]
 #
-# Opções:
-#   --skip-docker       Não instala/configura o Docker
-#   --skip-venv         Não cria o virtualenv nem instala o Snakemake
-#   --skip-clone        Não clona o repositório
-#   --skip-db           Não baixa nenhum banco de dados (bakta/dfast/eggnog)
-#   --skip-bakta-db     Pula só o banco do Bakta
-#   --skip-dfast-db     Pula só o banco do DFAST
-#   --skip-eggnog-db    Pula só o banco do eggNOG-mapper
-#   --skip-pgap         Não baixa/atualiza o banco do PGAP
-#   --bakta-full        Baixa o banco COMPLETO do Bakta (padrão: light)
-#   --db-dir DIR        Diretório base dos bancos (padrão: /opt/snakeMergeAnnotation/databases
-#                        no Linux; $HOME/snakeMergeAnnotation/databases no macOS,
-#                        para evitar problemas de permissão em /opt e de
-#                        "file sharing" do Docker Desktop)
-#   --venv-dir DIR      Caminho do virtualenv (padrão: $HOME/venv)
-#   --install-dir DIR   Onde clonar o repositório (padrão: $HOME)
-#   --repo URL          URL do repositório git
-#   --force             Refaz etapas mesmo se já parecerem concluídas
-#   -h, --help          Mostra esta ajuda
+# Options:
+#   --skip-docker       Do not install/configure Docker
+#   --skip-venv         Do not create the virtualenv nor install Snakemake
+#   --skip-clone        Do not clone the repository
+#   --skip-db           Do not download any databases (bakta/dfast/eggnog)
+#   --skip-bakta-db     Skip only the Bakta database
+#   --skip-dfast-db     Skip only the DFAST database
+#   --skip-eggnog-db    Skip only the eggNOG-mapper database
+#   --skip-pgap         Do not download/update the PGAP database
+#   --bakta-full        Download the COMPLETE Bakta database (default: light)
+#   --db-dir DIR        Base directory for databases (default: /opt/snakeMergeAnnotation/databases
+#                       on Linux; $HOME/snakeMergeAnnotation/databases on macOS,
+#                       to avoid permission issues in /opt and
+#                       Docker Desktop "file sharing" issues)
+#   --venv-dir DIR      Path to the virtualenv (default: $HOME/venv)
+#   --install-dir DIR   Where to clone the repository (default: $HOME)
+#   --repo URL          URL of the git repository
+#   --force             Redo steps even if they already seem complete
+#   -h, --help          Show this help
 # =============================================================================
 
 set -euo pipefail
@@ -42,17 +42,17 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/allanverasce/snakemergeannotation.git}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME}"
 VENV_DIR="${VENV_DIR:-$HOME/venv}"
-# Sentinela: o valor real é resolvido depois da detecção do SO (ver
-# resolve_db_base_dir), pois o padrão correto muda entre Linux e macOS.
+# Sentinel: the actual value is resolved after OS detection (see
+# resolve_db_base_dir), because the correct default changes between Linux and macOS.
 DB_BASE_DIR="${DB_BASE_DIR:-__AUTO__}"
 
 BAKTA_DB_TYPE="${BAKTA_DB_TYPE:-light}"          # light | full
 IMG_BAKTA="${IMG_BAKTA:-engbio/bakta:v1}"
 IMG_DFAST="${IMG_DFAST:-engbio/dfast:v1}"
-# Ajuste para bater exatamente com "eggnog.docker_image" do seu config.yaml.
-# Padrão: build oficial biocontainers, tag alinhada à última release estável
-# do eggNOG-mapper (2.1.15 — compatível com o banco eggNOG v5). A v3 (eggNOG
-# v7) ainda está em desenvolvimento ativo no momento deste script.
+# Adjusted to exactly match "eggnog.docker_image" in your config.yaml.
+# Default: official biocontainers build, tag aligned with the latest stable
+# release of eggNOG-mapper (2.1.15 — compatible with eggNOG v5 database). v3 (eggNOG
+# v7) is still under active development as of this script's writing.
 IMG_EGGNOG="${IMG_EGGNOG:-quay.io/biocontainers/eggnog-mapper:2.1.15--pyhdfd78af_0}"
 
 PGAP_SCRIPT_URL="${PGAP_SCRIPT_URL:-https://raw.githubusercontent.com/ncbi/pgap/prod/scripts/pgap.py}"
@@ -75,13 +75,13 @@ else
 fi
 log_info(){ echo -e "${C_BLUE}[INFO]${C_NC} $*"; }
 log_ok(){   echo -e "${C_GREEN}[OK]${C_NC}   $*"; }
-log_warn(){ echo -e "${C_YELLOW}[AVISO]${C_NC} $*"; }
-log_err(){  echo -e "${C_RED}[ERRO]${C_NC}  $*" >&2; }
+log_warn(){ echo -e "${C_YELLOW}[WARN]${C_NC} $*"; }
+log_err(){  echo -e "${C_RED}[ERROR]${C_NC}  $*" >&2; }
 step(){     echo -e "\n${C_BOLD}==> $*${C_NC}"; }
 die(){ log_err "$*"; exit 1; }
 
 # -----------------------------------------------------------------------------
-# ARGUMENTOS
+# ARGUMENTS
 # -----------------------------------------------------------------------------
 usage(){ sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'; }
 
@@ -102,7 +102,7 @@ while [[ $# -gt 0 ]]; do
         --repo)            REPO_URL="$2"; shift 2 ;;
         --force)           FORCE=true; shift ;;
         -h|--help)         usage; exit 0 ;;
-        *) die "Opção desconhecida: $1 (use --help)" ;;
+        *) die "Unknown option: $1 (use --help)" ;;
     esac
 done
 
@@ -115,13 +115,13 @@ PKG_MANAGER="unknown"
 IS_WSL=false
 
 detect_os() {
-    step "Detectando sistema operacional"
+    step "Detecting operating system"
     case "$(uname -s)" in
         Linux*)
             OS_TYPE="linux"
             if grep -qi microsoft /proc/version 2>/dev/null; then
                 IS_WSL=true
-                log_warn "Ambiente WSL detectado. O Docker Desktop (com integração WSL2) ou dockerd nativo dentro do WSL devem funcionar normalmente."
+                log_warn "WSL environment detected. Docker Desktop (with WSL2 integration) or native dockerd inside WSL should work normally."
             fi
             if [ -r /etc/os-release ]; then
                 # shellcheck disable=SC1091
@@ -138,7 +138,7 @@ detect_os() {
                             *rhel*|*fedora*) OS_FAMILY="rhel"; PKG_MANAGER="dnf" ;;
                             *arch*) OS_FAMILY="arch"; PKG_MANAGER="pacman" ;;
                             *suse*) OS_FAMILY="suse"; PKG_MANAGER="zypper" ;;
-                            *) OS_FAMILY="desconhecida"; PKG_MANAGER="desconhecido" ;;
+                            *) OS_FAMILY="unknown"; PKG_MANAGER="unknown" ;;
                         esac
                         ;;
                 esac
@@ -156,10 +156,10 @@ detect_os() {
     esac
 
     case "$OS_TYPE" in
-        linux)   log_ok "Linux detectado — distribuição: ${ID:-desconhecida} (família: $OS_FAMILY, gerenciador: $PKG_MANAGER)" ;;
-        macos)   log_ok "macOS detectado (versão $(sw_vers -productVersion 2>/dev/null || echo '?'))" ;;
-        windows) die "Windows nativo (fora do WSL) não é suportado diretamente. Instale o WSL2 (https://learn.microsoft.com/windows/wsl/install) e rode este script dentro dele." ;;
-        *)       die "Sistema operacional não reconhecido ($(uname -s))." ;;
+        linux)   log_ok "Linux detected — distribution: ${ID:-unknown} (family: $OS_FAMILY, package manager: $PKG_MANAGER)" ;;
+        macos)   log_ok "macOS detected (version $(sw_vers -productVersion 2>/dev/null || echo '?'))" ;;
+        windows) die "Native Windows (outside WSL) is not directly supported. Install WSL2 (https://learn.microsoft.com/windows/wsl/install) and run this script inside it." ;;
+        *)       die "Unrecognized operating system ($(uname -s))." ;;
     esac
 }
 
@@ -171,12 +171,12 @@ resolve_db_base_dir() {
         else
             DB_BASE_DIR="/opt/snakeMergeAnnotation/databases"
         fi
-        log_info "Diretório de bancos de dados não informado; usando padrão para $OS_TYPE: $DB_BASE_DIR"
+        log_info "Database directory not provided; using default for $OS_TYPE: $DB_BASE_DIR"
     fi
 }
 
 # =============================================================================
-# 2. DOCKER INSTALATION
+# 2. DOCKER INSTALLATION
 # =============================================================================
 install_prereqs_linux() {
     case "$PKG_MANAGER" in
@@ -195,25 +195,25 @@ install_prereqs_linux() {
             sudo zypper --non-interactive install ca-certificates curl git gcc gcc-c++ make
             ;;
         *)
-            log_warn "Gerenciador de pacotes não identificado; presumindo curl/git já instalados."
+            log_warn "Package manager not identified; assuming curl/git are already installed."
             ;;
     esac
 }
 
 install_docker_linux() {
     if command -v docker >/dev/null 2>&1 && [ "$FORCE" != true ]; then
-        log_ok "Docker já instalado: $(docker --version)"
+        log_ok "Docker already installed: $(docker --version)"
         return
     fi
 
-    log_info "Instalando Docker Engine..."
+    log_info "Installing Docker Engine..."
     case "$PKG_MANAGER" in
         arch)
             sudo pacman -Sy --noconfirm --needed docker docker-buildx
             ;;
         *)
-            # Script oficial de conveniência do Docker detecta apt/dnf/zypper
-            # internamente e cobre Debian/Ubuntu/Fedora/RHEL/CentOS/openSUSE.
+            # Docker's official convenience script detects apt/dnf/zypper
+            # internally and covers Debian/Ubuntu/Fedora/RHEL/CentOS/openSUSE.
             curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
             sudo sh /tmp/get-docker.sh
             rm -f /tmp/get-docker.sh
@@ -221,67 +221,67 @@ install_docker_linux() {
     esac
 
     sudo systemctl enable --now docker 2>/dev/null || \
-        log_warn "Não foi possível habilitar o serviço docker via systemctl (verifique manualmente se o daemon está ativo — comum em WSL sem systemd habilitado)."
+        log_warn "Could not enable the docker service via systemctl (verify manually that the daemon is active — common in WSL without systemd enabled)."
 
-    log_ok "Docker instalado: $(docker --version 2>/dev/null || echo 'verifique manualmente')"
+    log_ok "Docker installed: $(docker --version 2>/dev/null || echo 'verify manually')"
 }
 
 setup_docker_rootless_group() {
-    # "Docker sem sudo" = usuário no grupo 'docker' (abordagem padrão e
-    # oficialmente documentada pela Docker Inc. para uso sem sudo).
-    step "Configurando Docker sem necessidade de sudo (grupo 'docker')"
+    # "Docker without sudo" = user in the 'docker' group (standard and
+    # officially documented by Docker Inc. for sudo-less usage).
+    step "Configuring Docker without requiring sudo ('docker' group)"
 
     if [ "$IS_WSL" = true ] && command -v docker.exe >/dev/null 2>&1; then
-        log_info "WSL com Docker Desktop detectado (docker.exe no PATH); o daemon roda no Windows e é exposto via socket — grupo 'docker' local não é necessário."
+        log_info "WSL with Docker Desktop detected (docker.exe in PATH); the daemon runs on Windows and is exposed via socket — local 'docker' group is not required."
     fi
 
     if ! getent group docker >/dev/null 2>&1; then
         sudo groupadd docker
-        log_ok "Grupo 'docker' criado."
+        log_ok "Group 'docker' created."
     fi
 
     if id -nG "$USER" | grep -qw docker; then
-        log_ok "Usuário '$USER' já pertence ao grupo 'docker'."
+        log_ok "User '$USER' already belongs to the 'docker' group."
     else
         sudo usermod -aG docker "$USER"
-        log_warn "Usuário '$USER' adicionado ao grupo 'docker'. É necessário FAZER LOGOUT/LOGIN (ou reiniciar) para valer nesta e nas próximas sessões de terminal."
+        log_warn "User '$USER' added to the 'docker' group. You must LOGOUT/LOGIN (or restart) for this to take effect in this and future terminal sessions."
         NEED_RELOGIN=true
     fi
 
-    # Testa se o grupo já está ativo NESTA sessão de shell.
+    # Tests if the group is already active in THIS shell session.
     if docker info >/dev/null 2>&1; then
         DOCKER_CMD="docker"
-        log_ok "Docker responde sem sudo nesta sessão."
+        log_ok "Docker responds without sudo in this session."
     else
-        log_warn "Grupo 'docker' ainda não está ativo nesta sessão de terminal."
-        log_warn "Este script vai usar 'sudo docker' apenas para TERMINAR a instalação agora."
-        log_warn "Depois de logar novamente, use 'docker' normalmente, sem sudo."
+        log_warn "The 'docker' group is not yet active in this terminal session."
+        log_warn "This script will use 'sudo docker' only to FINISH the installation now."
+        log_warn "After logging back in, use 'docker' normally, without sudo."
         DOCKER_CMD="sudo docker"
     fi
 }
 
 setup_docker_macos() {
-    step "Configurando Docker no macOS"
+    step "Configuring Docker on macOS"
     if command -v docker >/dev/null 2>&1; then
-        log_ok "Docker já instalado: $(docker --version)"
+        log_ok "Docker already installed: $(docker --version)"
     elif command -v brew >/dev/null 2>&1; then
-        log_info "Instalando Docker Desktop via Homebrew (cask)..."
+        log_info "Installing Docker Desktop via Homebrew (cask)..."
         brew install --cask docker
-        log_warn "Abra o aplicativo Docker Desktop manualmente ao menos uma vez para concluir a configuração (é necessário aceitar permissões do macOS)."
+        log_warn "Open the Docker Desktop application manually at least once to complete the setup (you must accept macOS permissions)."
     else
-        die "Homebrew não encontrado. Instale o Docker Desktop manualmente em https://www.docker.com/products/docker-desktop/ e rode este script novamente com --skip-docker."
+        die "Homebrew not found. Install Docker Desktop manually at https://www.docker.com/products/docker-desktop/ and run this script again with --skip-docker."
     fi
-    # No macOS o Docker Desktop já roda sem sudo por padrão (usa uma VM interna).
+    # On macOS, Docker Desktop already runs without sudo by default (uses an internal VM).
     DOCKER_CMD="docker"
 }
 
 do_install_docker() {
     if [ "$SKIP_DOCKER" = true ]; then
-        log_warn "Instalação do Docker pulada (--skip-docker). Assumindo 'docker' disponível no PATH."
+        log_warn "Docker installation skipped (--skip-docker). Assuming 'docker' is available in PATH."
         DOCKER_CMD="docker"
         return
     fi
-    step "Instalando/verificando Docker"
+    step "Installing/checking Docker"
     case "$OS_TYPE" in
         linux)
             install_prereqs_linux
@@ -293,14 +293,14 @@ do_install_docker() {
             ;;
     esac
 
-    log_info "Testando Docker (${DOCKER_CMD})..."
+    log_info "Testing Docker (${DOCKER_CMD})..."
     if $DOCKER_CMD run --rm hello-world >/dev/null 2>&1; then
-        log_ok "Docker funcionando corretamente."
+        log_ok "Docker working correctly."
     else
         if [ "$OS_TYPE" = "macos" ]; then
-            log_warn "Não foi possível rodar 'hello-world'. Se o Docker Desktop acabou de ser instalado, abra o aplicativo manualmente uma vez (ele precisa inicializar sua VM interna) e rode o script de novo, ou continue depois de confirmar que o Docker Desktop está com o ícone ativo na barra de menus."
+            log_warn "Could not run 'hello-world'. If Docker Desktop was just installed, open the application manually once (it needs to initialize its internal VM) and run the script again, or continue after confirming Docker Desktop is active in the menu bar."
         else
-            log_warn "Não foi possível rodar 'hello-world' automaticamente. Verifique o Docker manualmente se algo falhar mais adiante (em WSL sem systemd pode ser necessário iniciar o daemon com 'sudo service docker start')."
+            log_warn "Could not run 'hello-world' automatically. Check Docker manually if anything fails further down (on WSL without systemd, you may need to start the daemon with 'sudo service docker start')."
         fi
     fi
 }
@@ -310,25 +310,25 @@ do_install_docker() {
 # =============================================================================
 do_setup_venv() {
     if [ "$SKIP_VENV" = true ]; then
-        log_warn "Criação do virtualenv pulada (--skip-venv)."
+        log_warn "Virtualenv creation skipped (--skip-venv)."
         return
     fi
-    step "Criando ambiente virtual Python em: $VENV_DIR"
+    step "Creating Python virtual environment at: $VENV_DIR"
 
-    command -v python3 >/dev/null 2>&1 || die "python3 não encontrado. Instale o Python 3 antes de continuar (macOS: 'brew install python3'; Linux: pacote python3 do seu gerenciador)."
+    command -v python3 >/dev/null 2>&1 || die "python3 not found. Install Python 3 before continuing (macOS: 'brew install python3'; Linux: python3 package from your package manager)."
 
     if [ -d "$VENV_DIR" ] && [ "$FORCE" != true ]; then
-        log_ok "Virtualenv já existe em $VENV_DIR (use --force para recriar)."
+        log_ok "Virtualenv already exists at $VENV_DIR (use --force to recreate)."
     else
         python3 -m venv "$VENV_DIR"
-        log_ok "Virtualenv criado em $VENV_DIR"
+        log_ok "Virtualenv created at $VENV_DIR"
     fi
 
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
     pip install --upgrade pip --quiet
     pip install snakemake --quiet
-    log_ok "Snakemake instalado: $(snakemake --version)"
+    log_ok "Snakemake installed: $(snakemake --version)"
     deactivate
 }
 
@@ -339,12 +339,12 @@ PROJECT_DIR=""
 
 do_clone_repo() {
     if [ "$SKIP_CLONE" = true ]; then
-        log_warn "Clone do repositório pulado (--skip-clone)."
+        log_warn "Repository clone skipped (--skip-clone)."
         return
     fi
-    step "Clonando repositório SnakeMergeAnnotation"
+    step "Cloning SnakeMergeAnnotation repository"
 
-    command -v git >/dev/null 2>&1 || die "git não encontrado. Instale o git antes de continuar."
+    command -v git >/dev/null 2>&1 || die "git not found. Install git before continuing."
 
     mkdir -p "$INSTALL_DIR"
     local dir_name
@@ -352,10 +352,10 @@ do_clone_repo() {
     PROJECT_DIR="$INSTALL_DIR/$dir_name"
 
     if [ -d "$PROJECT_DIR/.git" ] && [ "$FORCE" != true ]; then
-        log_ok "Repositório já clonado em $PROJECT_DIR"
+        log_ok "Repository already cloned at $PROJECT_DIR"
     else
         (cd "$INSTALL_DIR" && git clone "$REPO_URL")
-        log_ok "Repositório clonado em $PROJECT_DIR"
+        log_ok "Repository cloned at $PROJECT_DIR"
     fi
 }
 
@@ -363,20 +363,20 @@ do_clone_repo() {
 # 5. DOWNLOAD DATABASES
 # =============================================================================
 prepare_db_dirs() {
-    step "Preparando diretório de bancos de dados: $DB_BASE_DIR"
+    step "Preparing database directory: $DB_BASE_DIR"
     if [ "$OS_TYPE" = "linux" ]; then
         sudo mkdir -p "$DB_BASE_DIR"/{bakta_db,dfast_db,eggnog_db}
         sudo chown -R "$USER":"$(id -gn)" "$DB_BASE_DIR"
     else
         mkdir -p "$DB_BASE_DIR"/{bakta_db,dfast_db,eggnog_db}
     fi
-    log_ok "Diretórios prontos e com permissão para '$USER'."
+    log_ok "Directories ready and permissions set for '$USER'."
 
     if [ "$OS_TYPE" = "macos" ]; then
         case "$DB_BASE_DIR" in
-            "$HOME"/*) : ;; # dentro do HOME: compartilhado por padrão no Docker Desktop
+            "$HOME"/*) : ;; # inside HOME: shared by default in Docker Desktop
             *)
-                log_warn "O diretório '$DB_BASE_DIR' está fora do seu HOME. Confirme que ele está liberado em Docker Desktop > Settings > Resources > File sharing, senão os 'docker run -v ...' usados para baixar os bancos vão montar um diretório vazio dentro do container."
+                log_warn "The directory '$DB_BASE_DIR' is outside your HOME. Confirm it is allowed in Docker Desktop > Settings > Resources > File sharing, otherwise the 'docker run -v ...' commands used to download the databases will mount an empty directory inside the container."
                 ;;
         esac
     fi
@@ -388,87 +388,87 @@ dir_has_content() {
 
 download_bakta_db() {
     if [ "$SKIP_BAKTA_DB" = true ]; then
-        log_warn "Download do banco Bakta pulado (--skip-bakta-db)."
+        log_warn "Bakta database download skipped (--skip-bakta-db)."
         return
     fi
     if dir_has_content "$DB_BASE_DIR/bakta_db" && [ "$FORCE" != true ]; then
-        log_ok "Banco Bakta já parece existir em $DB_BASE_DIR/bakta_db (use --force para refazer)."
+        log_ok "Bakta database already seems to exist at $DB_BASE_DIR/bakta_db (use --force to redo)."
         return
     fi
-    step "Baixando banco de dados do Bakta (tipo: $BAKTA_DB_TYPE)"
+    step "Downloading Bakta database (type: $BAKTA_DB_TYPE)"
     $DOCKER_CMD run --rm \
         -v "$DB_BASE_DIR/bakta_db:/db" \
         "$IMG_BAKTA" \
         bakta_db --output /db download --type "$BAKTA_DB_TYPE"
-    log_ok "Banco Bakta baixado em $DB_BASE_DIR/bakta_db"
+    log_ok "Bakta database downloaded to $DB_BASE_DIR/bakta_db"
 }
 
 download_dfast_db() {
     if [ "$SKIP_DFAST_DB" = true ]; then
-        log_warn "Download do banco DFAST pulado (--skip-dfast-db)."
+        log_warn "DFAST database download skipped (--skip-dfast-db)."
         return
     fi
     if dir_has_content "$DB_BASE_DIR/dfast_db" && [ "$FORCE" != true ]; then
-        log_ok "Banco DFAST já parece existir em $DB_BASE_DIR/dfast_db (use --force para refazer)."
+        log_ok "DFAST database already seems to exist at $DB_BASE_DIR/dfast_db (use --force to redo)."
         return
     fi
-    step "Baixando bancos de dados do DFAST (proteínas, COG/CDD, TIGRFAMs)"
+    step "Downloading DFAST databases (proteins, COG/CDD, TIGRFAMs)"
 
-    log_info "  -> Banco de proteínas de referência..."
+    log_info "  -> Reference protein database..."
     $DOCKER_CMD run --rm \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
         python /dfast_core/scripts/file_downloader.py --protein dfast
 
-    log_info "  -> Banco COG/CDD..."
+    log_info "  -> COG/CDD database..."
     $DOCKER_CMD run --rm \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
         python /dfast_core/scripts/file_downloader.py --cdd Cog
 
-    log_info "  -> Banco TIGRFAMs (HMM)..."
+    log_info "  -> TIGRFAMs (HMM) database..."
     $DOCKER_CMD run --rm \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
         python /dfast_core/scripts/file_downloader.py --hmm TIGR
 
-    log_ok "Bancos DFAST baixados em $DB_BASE_DIR/dfast_db"
+    log_ok "DFAST databases downloaded to $DB_BASE_DIR/dfast_db"
 }
 
 download_eggnog_db() {
     if [ "$SKIP_EGGNOG_DB" = true ]; then
-        log_warn "Download do banco eggNOG-mapper pulado (--skip-eggnog-db)."
+        log_warn "eggNOG-mapper database download skipped (--skip-eggnog-db)."
         return
     fi
     if dir_has_content "$DB_BASE_DIR/eggnog_db" && [ "$FORCE" != true ]; then
-        log_ok "Banco eggNOG já parece existir em $DB_BASE_DIR/eggnog_db (use --force para refazer)."
+        log_ok "eggNOG database already seems to exist at $DB_BASE_DIR/eggnog_db (use --force to redo)."
         return
     fi
-    step "Baixando banco de dados do eggNOG-mapper (imagem: $IMG_EGGNOG)"
-    log_info "Isso baixa eggnog.db, eggnog_proteins.dmnd (DIAMOND) e eggnog.taxa.db — pode levar bastante tempo (dezenas de GB)."
+    step "Downloading eggNOG-mapper database (image: $IMG_EGGNOG)"
+    log_info "This downloads eggnog.db, eggnog_proteins.dmnd (DIAMOND), and eggnog.taxa.db — it may take quite a while (tens of GB)."
 
-    # download_eggnog_data.py pede confirmação interativa [y,n] para cada
-    # banco; -y assume 'sim' para todas as perguntas (execução não-interativa).
-    # Tentamos primeiro assumindo que o script já está no PATH da imagem
-    # (mesmo padrão usado no Snakefile para 'emapper.py'); se falhar, tenta
-    # de novo forçando o entrypoint — cobre imagens com ENTRYPOINT diferente.
+    # download_eggnog_data.py asks for interactive confirmation [y,n] for each
+    # database; -y assumes 'yes' for all questions (non-interactive execution).
+    # We first try assuming the script is already in the image's PATH
+    # (same default used in the Snakefile for 'emapper.py'); if it fails, try
+    # again forcing the entrypoint — covers images with a different ENTRYPOINT.
     if ! $DOCKER_CMD run --rm \
             -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
             "$IMG_EGGNOG" \
             download_eggnog_data.py --data_dir /eggnog_db -y; then
-        log_warn "Chamada direta falhou; tentando novamente forçando o entrypoint..."
+        log_warn "Direct call failed; trying again forcing the entrypoint..."
         $DOCKER_CMD run --rm \
             --entrypoint download_eggnog_data.py \
             -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
             "$IMG_EGGNOG" \
             --data_dir /eggnog_db -y
     fi
-    log_ok "Banco eggNOG-mapper baixado em $DB_BASE_DIR/eggnog_db"
+    log_ok "eggNOG-mapper database downloaded to $DB_BASE_DIR/eggnog_db"
 }
 
 do_download_databases() {
     if [ "$SKIP_DB" = true ]; then
-        log_warn "Download de todos os bancos de dados pulado (--skip-db)."
+        log_warn "All database downloads skipped (--skip-db)."
         return
     fi
     prepare_db_dirs
@@ -478,38 +478,38 @@ do_download_databases() {
 }
 
 # =============================================================================
-# 6. DOWNLOAD PGAP (banco fica no HOME do usuário, gerenciado pelo próprio pgap.py)
+# 6. DOWNLOAD PGAP (database stays in the user's HOME, managed by pgap.py itself)
 # =============================================================================
 do_setup_pgap() {
     if [ "$SKIP_PGAP" = true ]; then
-        log_warn "Configuração do PGAP pulada (--skip-pgap)."
+        log_warn "PGAP setup skipped (--skip-pgap)."
         return
     fi
     if [ -z "$PROJECT_DIR" ] || [ ! -d "$PROJECT_DIR" ]; then
-        log_warn "Diretório do projeto não disponível (repositório não foi clonado nesta execução); pulando etapa do PGAP. Rode com --repo/--install-dir corretos ou sem --skip-clone."
+        log_warn "Project directory not available (repository was not cloned in this run); skipping PGAP step. Run with --repo/--install-dir set correctly or without --skip-clone."
         return
     fi
 
-    step "Configurando PGAP (banco de dados fica em ~/.pgap, gerenciado pelo próprio PGAP)"
+    step "Setting up PGAP (database stays in ~/.pgap, managed by PGAP itself)"
 
     if [ "$OS_TYPE" = "macos" ]; then
-        log_warn "O PGAP (NCBI) é desenvolvido e testado oficialmente apenas em Linux. Em macOS ele pode funcionar via Docker, mas não há suporte oficial da NCBI — se falhar, considere rodar essa etapa dentro de uma VM/container Linux."
+        log_warn "PGAP (NCBI) is officially developed and tested only on Linux. On macOS it may work via Docker, but there is no official NCBI support — if it fails, consider running this step inside a Linux VM/container."
     fi
 
     cd "$PROJECT_DIR"
 
     if [ ! -f pgap.py ] || [ "$FORCE" = true ]; then
-        log_info "Baixando pgap.py..."
+        log_info "Downloading pgap.py..."
         curl -fsSL -o pgap.py "$PGAP_SCRIPT_URL"
         chmod +x pgap.py
     else
-        log_ok "pgap.py já presente em $PROJECT_DIR"
+        log_ok "pgap.py already present at $PROJECT_DIR"
     fi
 
-    log_info "Atualizando/baixando o banco de dados do PGAP (python pgap.py --update)..."
-    log_warn "Esta etapa baixa vários GB e pode demorar bastante."
+    log_info "Updating/downloading the PGAP database (python pgap.py --update)..."
+    log_warn "This step downloads several GB and may take quite a while."
     python3 pgap.py --update
-    log_ok "PGAP atualizado."
+    log_ok "PGAP updated."
 }
 
 # =============================================================================
@@ -518,24 +518,24 @@ do_setup_pgap() {
 print_summary() {
     echo
     echo -e "${C_BOLD}================================================================${C_NC}"
-    echo -e "${C_BOLD} Instalação concluída — SnakeMergeAnnotation${C_NC}"
+    echo -e "${C_BOLD} Installation complete — SnakeMergeAnnotation${C_NC}"
     echo -e "${C_BOLD}================================================================${C_NC}"
-    echo "Sistema operacional : $OS_TYPE ($OS_FAMILY)"
+    echo "Operating system    : $OS_TYPE ($OS_FAMILY)"
     [ "$SKIP_VENV" = false ]  && echo "Virtualenv           : $VENV_DIR"
-    [ "$SKIP_CLONE" = false ] && echo "Projeto               : ${PROJECT_DIR:-'(não clonado)'}"
-    [ "$SKIP_DB" = false ]    && echo "Bancos de dados        : $DB_BASE_DIR"
+    [ "$SKIP_CLONE" = false ] && echo "Project              : ${PROJECT_DIR:-'(not cloned)'}"
+    [ "$SKIP_DB" = false ]    && echo "Databases            : $DB_BASE_DIR"
     echo
-    echo "Próximos passos:"
+    echo "Next steps:"
     [ "${NEED_RELOGIN:-false}" = true ] && \
-        echo -e "  ${C_YELLOW}*${C_NC} Faça LOGOUT/LOGIN (ou 'newgrp docker') para usar 'docker' sem sudo."
+        echo -e "  ${C_YELLOW}*${C_NC} LOGOUT/LOGIN (or 'newgrp docker') to use 'docker' without sudo."
     [ "$SKIP_VENV" = false ] && \
-        echo "  * Ative o virtualenv:  source $VENV_DIR/bin/activate"
-    echo "  * Ajuste seu config.yaml apontando para:"
+        echo "  * Activate the virtualenv:  source $VENV_DIR/bin/activate"
+    echo "  * Adjust your config.yaml pointing to:"
     [ "$SKIP_DB" = false ] && echo "      - bakta.db_path:   $DB_BASE_DIR/bakta_db"
     [ "$SKIP_DB" = false ] && echo "      - dfast.db_path:   $DB_BASE_DIR/dfast_db"
     [ "$SKIP_DB" = false ] && echo "      - eggnog.db_path:  $DB_BASE_DIR/eggnog_db"
-    [ "$SKIP_DB" = false ] && echo "      - eggnog.docker_image: $IMG_EGGNOG (confirme que bate com o que você quer usar)"
-    echo "  * Rode o pipeline com: snakemake --configfile config.yaml ..."
+    [ "$SKIP_DB" = false ] && echo "      - eggnog.docker_image: $IMG_EGGNOG (make sure it matches what you want to use)"
+    echo "  * Run the pipeline with: snakemake --configfile config.yaml ..."
     echo -e "${C_BOLD}================================================================${C_NC}"
 }
 
