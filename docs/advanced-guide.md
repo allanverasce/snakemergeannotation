@@ -267,7 +267,7 @@ output_dir/
 │   ├── <genome>_patric_bakta_UPDATED.gb     after Bakta merge
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED.gb
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_UPDATED.gb
-│   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb  ◀ FINAL
+│   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_cured.gb  ◀ FINAL
 │   └── hp_summary_report.tsv                consolidated HP reduction table
 │
 ├── merge_results/
@@ -291,7 +291,7 @@ output_dir/
 
 | File | Description |
 |---|---|
-| `*_finalversion.gb` | Final enriched GenBank — main result |
+| `*_cured.gb` | Final enriched GenBank — main result |
 | `annotation_comparison_report.xlsx` | BLASTp comparison between all tools |
 | `hp_summary_report.tsv` | HP counts at each merge step |
 | `article_ready_table.csv` | Summary table with % reduction per genome |
