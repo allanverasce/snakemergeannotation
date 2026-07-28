@@ -24,13 +24,13 @@ python -m venv venv
 source /home/allan/venv/bin/activate
 ```
 4. Install Snakemake: `pip install snakemake`
-5. Run:
+5. Go to the software directory—for example, `cd snakemergeannotation`—and inside it, run:
    ```
    python app.py
    ```
    then open `http://localhost:5000` in your browser.
 
-The interface will walk you through the configuration, tools, merge, and execution tabs, with real-time progress tracking through the logs. You can also turn individual annotation tools on or off directly in the interface — no command-line flags needed.
+The interface will walk you through the configuration, tools, merge, and execution tabs, with real-time progress tracking through the logs. You can also turn individual annotation tools on or off directly in the interface, no command-line flags needed.
 
 Full step-by-step guide with screenshots: **[docs/quick-start-guide.md](docs/quick-start-guide.md)**
 
