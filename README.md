@@ -13,10 +13,6 @@ SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGA
 
 ---
 
-##  New to bioinformatics or the command line? Start here
-
----
-
 ## Requirements
 
 You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside Docker containers:
@@ -43,6 +39,8 @@ Go to the software directory,for example, `cd snakemergeannotation` and run the 
 
 The interface will walk you through the configuration, tools, merge, and execution tabs, with real-time progress tracking through the logs. You can also turn individual annotation tools on or off directly in the interface — no command-line flags needed.
 
+##  New to bioinformatics or the command line? Start here
+---
 Full step-by-step guide with screenshots: **[docs/quick-start-guide.md](docs/quick-start-guide.md)**
 
 ---
