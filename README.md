@@ -201,6 +201,7 @@ If you use SnakeMergeAnnotation in your research, please cite the underlying too
 - **Prokka:** Seemann (2014) *Bioinformatics*. <https://doi.org/10.1093/bioinformatics/btu153>
 - **DFAST:** Tanizawa et al. (2018) *Bioinformatics*. <https://doi.org/10.1093/bioinformatics/btx713>
 - **BV-BRC:** Olson et al. (2023) *Nucleic Acids Research*. <https://doi.org/10.1093/nar/gkac1003>
+- **eggNOG:** Cantalapiedra et al. (2021) *Molecular Biology and Evolution*. <https://doi.org/10.1093/molbev/msab293>
 - **Snakemake:** Mölder et al. (2021) *F1000Research*. <https://doi.org/10.12688/f1000research.29032.2>
 
 ---
