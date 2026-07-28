@@ -158,7 +158,7 @@ At the end of the run, the most important files are automatically highlighted in
 
 | File | Description |
 |---|---|
-| `*_finalversion.gb` | Final enriched GenBank file — main result |
+| `*_cured.gb` | Final enriched GenBank file — main result |
 | `annotation_comparison_report.xlsx` | BLASTp comparison across all tools |
 | `hp_summary_report.tsv` | HP counts at each merge step |
 | `article_ready_table.csv` | Summary table with % reduction per genome |
