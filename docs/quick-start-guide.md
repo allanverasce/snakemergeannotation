@@ -3,6 +3,7 @@
 This guide is for anyone **with no command-line experience** who wants to use SnakeMergeAnnotation through the graphical interface.
 The user can choose to use the dependency installation script: [install_dependencies.sh](https://github.com/allanverasce/snakemergeannotation/blob/main/install_dependencies.sh)
 
+**Note:** After installing the components, proceed to Step 4 — Open the interface
 
 ## If you choose to follow the step-by-step guide, please follow the instructions below.  What you'll need
 
