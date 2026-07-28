@@ -13,7 +13,7 @@ No programming knowledge or terminal use is required beyond the installation ste
 
 ---
 
-## Step 1 — Install the prerequisites
+## Step 1 — Install the pre-requisites
 
 Open a terminal (Command Prompt on Windows; Terminal on Mac/Linux) and run:
 
