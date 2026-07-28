@@ -1,6 +1,13 @@
 # Quick Start Guide — Basic Mode (Graphical Interface)
 
 This guide is for anyone **with no command-line experience** who wants to use SnakeMergeAnnotation through the graphical interface.
+The user can choose to use the dependency installation script: 
+
+```
+
+
+
+
 
 ## What you'll need
 
