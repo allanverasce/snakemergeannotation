@@ -52,8 +52,7 @@ IMG_BAKTA="${IMG_BAKTA:-engbio/bakta:v1}"
 IMG_DFAST="${IMG_DFAST:-engbio/dfast:v1}"
 # Adjusted to exactly match "eggnog.docker_image" in your config.yaml.
 # Default: official biocontainers build, tag aligned with the latest stable
-# release of eggNOG-mapper (2.1.15 — compatible with eggNOG v5 database). v3 (eggNOG
-# v7) is still under active development as of this script's writing.
+# release of eggNOG-mapper (2.1.15 — compatible with eggNOG v5 database).
 IMG_EGGNOG="${IMG_EGGNOG:-quay.io/biocontainers/eggnog-mapper:2.1.15--pyhdfd78af_0}"
 
 PGAP_SCRIPT_URL="${PGAP_SCRIPT_URL:-https://raw.githubusercontent.com/ncbi/pgap/prod/scripts/pgap.py}"
@@ -321,7 +320,6 @@ do_setup_venv() {
     if [ -f "$VENV_DIR/bin/activate" ] && [ "$FORCE" != true ]; then
         log_ok "Virtualenv already exists at $VENV_DIR (use --force to recreate)."
     else
-        # Limpa o diretorio corrompido antes de tentar criar de novo
         rm -rf "$VENV_DIR"
         python3 -m venv "$VENV_DIR"
         log_ok "Virtualenv created at $VENV_DIR"
@@ -399,10 +397,14 @@ download_bakta_db() {
         return
     fi
     step "Downloading Bakta database (type: $BAKTA_DB_TYPE)"
+    
+    # Caminho absoluto para o bakta_db encontrado dentro da engbio/bakta:v1
     $DOCKER_CMD run --rm \
+        --entrypoint /opt/conda/bin/bakta_db \
         -v "$DB_BASE_DIR/bakta_db:/db" \
         "$IMG_BAKTA" \
-        bakta_db --output /db download --type "$BAKTA_DB_TYPE"
+        download --output /db --type "$BAKTA_DB_TYPE"
+        
     log_ok "Bakta database downloaded to $DB_BASE_DIR/bakta_db"
 }
 
@@ -419,21 +421,24 @@ download_dfast_db() {
 
     log_info "  -> Reference protein database..."
     $DOCKER_CMD run --rm \
+        --entrypoint python \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
-        python /dfast_core/scripts/file_downloader.py --protein dfast
+        /dfast_core/scripts/file_downloader.py --protein dfast
 
     log_info "  -> COG/CDD database..."
     $DOCKER_CMD run --rm \
+        --entrypoint python \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
-        python /dfast_core/scripts/file_downloader.py --cdd Cog
+        /dfast_core/scripts/file_downloader.py --cdd Cog
 
     log_info "  -> TIGRFAMs (HMM) database..."
     $DOCKER_CMD run --rm \
+        --entrypoint python \
         -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
         "$IMG_DFAST" \
-        python /dfast_core/scripts/file_downloader.py --hmm TIGR
+        /dfast_core/scripts/file_downloader.py --hmm TIGR
 
     log_ok "DFAST databases downloaded to $DB_BASE_DIR/dfast_db"
 }
@@ -450,17 +455,12 @@ download_eggnog_db() {
     step "Downloading eggNOG-mapper database (image: $IMG_EGGNOG)"
     log_info "This downloads eggnog.db, eggnog_proteins.dmnd (DIAMOND), and eggnog.taxa.db — it may take quite a while (tens of GB)."
 
-    if ! $DOCKER_CMD run --rm \
-            -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
-            "$IMG_EGGNOG" \
-            download_eggnog_data.py --data_dir /eggnog_db -y; then
-        log_warn "Direct call failed; trying again forcing the entrypoint..."
-        $DOCKER_CMD run --rm \
-            --entrypoint download_eggnog_data.py \
-            -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
-            "$IMG_EGGNOG" \
-            --data_dir /eggnog_db -y
-    fi
+    $DOCKER_CMD run --rm \
+        --entrypoint download_eggnog_data.py \
+        -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
+        "$IMG_EGGNOG" \
+        --data_dir /eggnog_db -y
+        
     log_ok "eggNOG-mapper database downloaded to $DB_BASE_DIR/eggnog_db"
 }
 
@@ -532,7 +532,7 @@ print_summary() {
     [ "$SKIP_DB" = false ] && echo "      - bakta.db_path:   $DB_BASE_DIR/bakta_db"
     [ "$SKIP_DB" = false ] && echo "      - dfast.db_path:   $DB_BASE_DIR/dfast_db"
     [ "$SKIP_DB" = false ] && echo "      - eggnog.db_path:  $DB_BASE_DIR/eggnog_db"
-    [ "$SKIP_DB" = false ] && echo "      - eggnog.docker_image: $IMG_EGGNOG (make sure it matches what you want to use)"
+    [ "$SKIP_DB" = false ] && echo "      - eggnog.docker_image: $IMG_EGGNOG"
     echo "  * Run the pipeline with: snakemake --configfile config.yaml ..."
     echo -e "${C_BOLD}================================================================${C_NC}"
 }
