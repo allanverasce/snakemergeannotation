@@ -3,13 +3,14 @@
 # install_dependencies.sh — SnakeMergeAnnotation
 # =============================================================================
 # Installs ALL dependencies for the pipeline:
-#   1. Docker (automatically detects the OS)
-#   2. Docker without sudo ("docker" group, on Linux)
-#   3. Python virtual environment (venv) + Snakemake
-#   4. Clone the SnakeMergeAnnotation repository
-#   5. Databases: Bakta (light), DFAST (proteins/COG/TIGRFAMs),
+#   1. System prerequisites (curl, git, python3-venv)
+#   2. Docker (automatically detects the OS)
+#   3. Docker without sudo ("docker" group, on Linux)
+#   4. Python virtual environment (venv) + Snakemake
+#   5. Clone the SnakeMergeAnnotation repository
+#   6. Databases: Bakta (light), DFAST (proteins/COG/TIGRFAMs),
 #      eggNOG-mapper (most recent stable version) — all under /opt (Linux)
-#   6. PGAP: downloads pgap.py and runs "pgap.py --update" (stays in the user's
+#   7. PGAP: downloads pgap.py and runs "pgap.py --update" (stays in the user's
 #      HOME, as PGAP itself manages by default)
 #
 # Usage:
@@ -44,7 +45,7 @@ INSTALL_DIR="${INSTALL_DIR:-$HOME}"
 VENV_DIR="${VENV_DIR:-$HOME/venv}"
 # Sentinel: the actual value is resolved after OS detection (see
 # resolve_db_base_dir), because the correct default changes between Linux and macOS.
-DB_BASE_DIR="${DB_BASE_DIR:-__AUTO__}"
+DB_BASE_DIR="${DB_BASE_DIR:-_AUTO_}"
 
 BAKTA_DB_TYPE="${BAKTA_DB_TYPE:-light}"          # light | full
 IMG_BAKTA="${IMG_BAKTA:-engbio/bakta:v1}"
@@ -134,10 +135,10 @@ detect_os() {
                     opensuse*|sles)                        OS_FAMILY="suse";   PKG_MANAGER="zypper" ;;
                     *)
                         case "${ID_LIKE:-}" in
-                            *debian*) OS_FAMILY="debian"; PKG_MANAGER="apt" ;;
-                            *rhel*|*fedora*) OS_FAMILY="rhel"; PKG_MANAGER="dnf" ;;
-                            *arch*) OS_FAMILY="arch"; PKG_MANAGER="pacman" ;;
-                            *suse*) OS_FAMILY="suse"; PKG_MANAGER="zypper" ;;
+                            debian) OS_FAMILY="debian"; PKG_MANAGER="apt" ;;
+                            rhel|fedora) OS_FAMILY="rhel"; PKG_MANAGER="dnf" ;;
+                            arch) OS_FAMILY="arch"; PKG_MANAGER="pacman" ;;
+                            suse) OS_FAMILY="suse"; PKG_MANAGER="zypper" ;;
                             *) OS_FAMILY="unknown"; PKG_MANAGER="unknown" ;;
                         esac
                         ;;
@@ -163,9 +164,8 @@ detect_os() {
     esac
 }
 
-
 resolve_db_base_dir() {
-    if [ "$DB_BASE_DIR" = "__AUTO__" ]; then
+    if [ "$DB_BASE_DIR" = "_AUTO_" ]; then
         if [ "$OS_TYPE" = "macos" ]; then
             DB_BASE_DIR="$HOME/snakeMergeAnnotation/databases"
         else
@@ -176,30 +176,38 @@ resolve_db_base_dir() {
 }
 
 # =============================================================================
-# 2. DOCKER INSTALLATION
+# 2. PREREQUISITES
 # =============================================================================
-install_prereqs_linux() {
-    case "$PKG_MANAGER" in
-        apt)
-            sudo apt-get update -y
-            sudo apt-get install -y ca-certificates curl git build-essential
-            ;;
-        dnf)
-            sudo dnf install -y ca-certificates curl git @development-tools || \
-            sudo dnf install -y ca-certificates curl git gcc gcc-c++ make
-            ;;
-        pacman)
-            sudo pacman -Sy --noconfirm --needed ca-certificates curl git base-devel
-            ;;
-        zypper)
-            sudo zypper --non-interactive install ca-certificates curl git gcc gcc-c++ make
-            ;;
-        *)
-            log_warn "Package manager not identified; assuming curl/git are already installed."
-            ;;
-    esac
+do_install_prereqs() {
+    step "Installing system prerequisites"
+    if [ "$OS_TYPE" = "linux" ]; then
+        case "$PKG_MANAGER" in
+            apt)
+                sudo apt-get update -y
+                sudo apt-get install -y ca-certificates curl git build-essential python3-venv python3-pip
+                ;;
+            dnf)
+                sudo dnf install -y ca-certificates curl git @development-tools || \
+                sudo dnf install -y ca-certificates curl git gcc gcc-c++ make
+                ;;
+            pacman)
+                sudo pacman -Sy --noconfirm --needed ca-certificates curl git base-devel
+                ;;
+            zypper)
+                sudo zypper --non-interactive install ca-certificates curl git gcc gcc-c++ make
+                ;;
+            *)
+                log_warn "Package manager not identified; assuming curl/git/python3-venv are already installed."
+                ;;
+        esac
+    elif [ "$OS_TYPE" = "macos" ]; then
+        log_info "macOS detected. Assuming brew/git/python3 are managed by the user."
+    fi
 }
 
+# =============================================================================
+# 3. DOCKER INSTALLATION
+# =============================================================================
 install_docker_linux() {
     if command -v docker >/dev/null 2>&1 && [ "$FORCE" != true ]; then
         log_ok "Docker already installed: $(docker --version)"
@@ -212,8 +220,6 @@ install_docker_linux() {
             sudo pacman -Sy --noconfirm --needed docker docker-buildx
             ;;
         *)
-            # Docker's official convenience script detects apt/dnf/zypper
-            # internally and covers Debian/Ubuntu/Fedora/RHEL/CentOS/openSUSE.
             curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
             sudo sh /tmp/get-docker.sh
             rm -f /tmp/get-docker.sh
@@ -227,8 +233,6 @@ install_docker_linux() {
 }
 
 setup_docker_rootless_group() {
-    # "Docker without sudo" = user in the 'docker' group (standard and
-    # officially documented by Docker Inc. for sudo-less usage).
     step "Configuring Docker without requiring sudo ('docker' group)"
 
     if [ "$IS_WSL" = true ] && command -v docker.exe >/dev/null 2>&1; then
@@ -248,7 +252,6 @@ setup_docker_rootless_group() {
         NEED_RELOGIN=true
     fi
 
-    # Tests if the group is already active in THIS shell session.
     if docker info >/dev/null 2>&1; then
         DOCKER_CMD="docker"
         log_ok "Docker responds without sudo in this session."
@@ -271,7 +274,6 @@ setup_docker_macos() {
     else
         die "Homebrew not found. Install Docker Desktop manually at https://www.docker.com/products/docker-desktop/ and run this script again with --skip-docker."
     fi
-    # On macOS, Docker Desktop already runs without sudo by default (uses an internal VM).
     DOCKER_CMD="docker"
 }
 
@@ -284,7 +286,6 @@ do_install_docker() {
     step "Installing/checking Docker"
     case "$OS_TYPE" in
         linux)
-            install_prereqs_linux
             install_docker_linux
             setup_docker_rootless_group
             ;;
@@ -306,7 +307,7 @@ do_install_docker() {
 }
 
 # =============================================================================
-# 3. VIRTUALENV PYTHON + SNAKEMAKE
+# 4. VIRTUALENV PYTHON + SNAKEMAKE
 # =============================================================================
 do_setup_venv() {
     if [ "$SKIP_VENV" = true ]; then
@@ -317,9 +318,11 @@ do_setup_venv() {
 
     command -v python3 >/dev/null 2>&1 || die "python3 not found. Install Python 3 before continuing (macOS: 'brew install python3'; Linux: python3 package from your package manager)."
 
-    if [ -d "$VENV_DIR" ] && [ "$FORCE" != true ]; then
+    if [ -f "$VENV_DIR/bin/activate" ] && [ "$FORCE" != true ]; then
         log_ok "Virtualenv already exists at $VENV_DIR (use --force to recreate)."
     else
+        # Limpa o diretorio corrompido antes de tentar criar de novo
+        rm -rf "$VENV_DIR"
         python3 -m venv "$VENV_DIR"
         log_ok "Virtualenv created at $VENV_DIR"
     fi
@@ -333,7 +336,7 @@ do_setup_venv() {
 }
 
 # =============================================================================
-# 4. DOWNLOAD FROM GITHUB
+# 5. DOWNLOAD FROM GITHUB
 # =============================================================================
 PROJECT_DIR=""
 
@@ -360,7 +363,7 @@ do_clone_repo() {
 }
 
 # =============================================================================
-# 5. DOWNLOAD DATABASES
+# 6. DOWNLOAD DATABASES
 # =============================================================================
 prepare_db_dirs() {
     step "Preparing database directory: $DB_BASE_DIR"
@@ -374,7 +377,7 @@ prepare_db_dirs() {
 
     if [ "$OS_TYPE" = "macos" ]; then
         case "$DB_BASE_DIR" in
-            "$HOME"/*) : ;; # inside HOME: shared by default in Docker Desktop
+            "$HOME"/*) : ;; 
             *)
                 log_warn "The directory '$DB_BASE_DIR' is outside your HOME. Confirm it is allowed in Docker Desktop > Settings > Resources > File sharing, otherwise the 'docker run -v ...' commands used to download the databases will mount an empty directory inside the container."
                 ;;
@@ -447,11 +450,6 @@ download_eggnog_db() {
     step "Downloading eggNOG-mapper database (image: $IMG_EGGNOG)"
     log_info "This downloads eggnog.db, eggnog_proteins.dmnd (DIAMOND), and eggnog.taxa.db — it may take quite a while (tens of GB)."
 
-    # download_eggnog_data.py asks for interactive confirmation [y,n] for each
-    # database; -y assumes 'yes' for all questions (non-interactive execution).
-    # We first try assuming the script is already in the image's PATH
-    # (same default used in the Snakefile for 'emapper.py'); if it fails, try
-    # again forcing the entrypoint — covers images with a different ENTRYPOINT.
     if ! $DOCKER_CMD run --rm \
             -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
             "$IMG_EGGNOG" \
@@ -478,7 +476,7 @@ do_download_databases() {
 }
 
 # =============================================================================
-# 6. DOWNLOAD PGAP (database stays in the user's HOME, managed by pgap.py itself)
+# 7. DOWNLOAD PGAP (database stays in the user's HOME, managed by pgap.py itself)
 # =============================================================================
 do_setup_pgap() {
     if [ "$SKIP_PGAP" = true ]; then
@@ -548,6 +546,7 @@ DOCKER_CMD="docker"
 main() {
     detect_os
     resolve_db_base_dir
+    do_install_prereqs
     do_install_docker
     do_setup_venv
     do_clone_repo
