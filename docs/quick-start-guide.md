@@ -73,8 +73,6 @@ docker run --rm \
 python pgap.py --update
 ```
 
-> Tip: write down the full path where you saved these databases — you'll need it in Step 5. If you're working with metagenomic data (see [below](#genomic-data-vs-metagenomic-data)), you may not need PATRIC or PGAP at all, and can skip those downloads.
-
 ## Step 4 — Open the interface
 
 To start basic mode, from the terminal, inside the project folder, run:
