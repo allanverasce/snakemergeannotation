@@ -1,15 +1,10 @@
 # Quick Start Guide — Basic Mode (Graphical Interface)
 
 This guide is for anyone **with no command-line experience** who wants to use SnakeMergeAnnotation through the graphical interface.
-The user can choose to use the dependency installation script: 
-
-```
+The user can choose to use the dependency installation script: [install_dependencies.sh](https://github.com/allanverasce/snakemergeannotation/blob/main/install_dependencies.sh)
 
 
-
-
-
-## What you'll need
+## If you choose to follow the step-by-step guide, please follow the instructions below.  What you'll need
 
 - A computer with Docker installed ([how to install](https://docs.docker.com/get-docker/))
 - Python installed, with Snakemake (`pip install snakemake`)
