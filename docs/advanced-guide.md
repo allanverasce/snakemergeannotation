@@ -193,8 +193,6 @@ snakemake --configfile config.yaml --cores 16 \
 All tools enabled, using PATRIC as the default:
 
 ```bash
-source $HOME/venv/bin/activate
-
 snakemake --configfile config.yaml \
   --cores 20 \
   --jobs 2 \
@@ -217,7 +215,6 @@ PATRIC and PGAP disabled, Bakta as the baseline:
 
 ```bash
 source $HOME/venv/bin/activate
-
 snakemake --configfile config.yaml \
   --cores 20 \
   --jobs 2 \
@@ -226,6 +223,7 @@ snakemake --configfile config.yaml \
   --rerun-incomplete \
   --latency-wait 60 \
   --config base_tool=bakta patric.enabled=false pgap.enabled=false
+
 ```
 
 Remember to also set the taxonomy-related fields to `"unknown"` in `config.yaml` for Bakta (`genus`, `strain`, `gram`), Prokka (`genus`), and DFAST (`organism`) — see [Genomic data vs. metagenomic data](quick-start-guide.md#genomic-data-vs-metagenomic-data).
