@@ -129,7 +129,7 @@ SnakeMergeAnnotation can be used for **genomic** or **metagenomic** data.
 
 When the run completes, open the output folder you specified on the Home tab. You'll find a `README.txt` (or `summary.html`) file pointing directly to:
 
-- The main result (final enriched annotation)
+- The main result (final enriched annotation: *_cured.gb)
 - The publication-ready table
 - The hypothetical protein reduction plots
 
