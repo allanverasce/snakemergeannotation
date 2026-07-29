@@ -73,6 +73,23 @@ docker run --rm \
 python pgap.py --update
 ```
 
+## eggNOG database
+
+~50 GB — includes the main eggNOG database and the DIAMOND/HMMER databases used for annotation searches:
+
+```
+docker run --rm \
+    -v "/path/to/databases/eggnog_db:/db" \
+    engbio/eggnog:v1 \
+    download_eggnog_data.py --data_dir /db -y
+```
+
+**Notes:**
+
+- By default, `download_eggnog_data.py` downloads the main database (`eggnog.db`) and the DIAMOND database (`eggnog_proteins.dmnd`), which together already account for most of the required space.
+- If you also plan to use HMMER-based searches (per specific taxon), you may need additional flags, such as `-H` to download the HMM profiles, or `-M` for the Mantis database, depending on the image/tool version.
+- As with the other databases, this download only needs to be done once — afterward, simply point the database parameter (`--data_dir` or equivalent) to this local folder when running annotations.
+- Make sure there is enough free disk space before starting (at least ~60 GB free is recommended, accounting for temporary files during download/decompression).
 
 **Database size for each tool**
 
