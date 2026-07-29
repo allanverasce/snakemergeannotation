@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
 </p>
 
-> **A containerized Snakemake pipeline for curating hypothetical proteins in bacterial genomes and prokaryotic MAGs.**
+> **A containerized Snakemake pipeline for the automatic curation of hypothetical proteins in bacterial genomes and prokaryotic MAGs**
 
 <p align="justify"> SnakeMergeAnnotation orchestrates annotation tools — Bakta, Prokka, DFAST, PGAP, eggNOG, and BV-BRC/PATRIC — in a single Snakemake workflow, then merges their results to transfer functional annotations to hypothetical proteins. It works for both **genomic** (isolate genomes with known taxonomy) and **metagenomic** (MAGs/bins with unknown taxonomy) data.</p>
 
