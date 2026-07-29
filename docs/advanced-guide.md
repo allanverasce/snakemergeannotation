@@ -324,4 +324,4 @@ merge:
   min_qcov:   0.7
 ```
 
-> **Important:** annotation transfer only occurs for **full-length alignments** where `alignment_length == CDS_length` for both query and subject. This prevents partial matches and frameshifted CDS from being transferred.
+
