@@ -73,6 +73,11 @@ docker run --rm \
 python pgap.py --update
 ```
 
+Database space requeriments
+4.0G	databases/db-light
+
+
+
 ## Step 4 — Open the interface
 
 To start basic mode, from the terminal, inside the project folder, run:
