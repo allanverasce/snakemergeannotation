@@ -74,6 +74,8 @@ python pgap.py --update
 ```
 
 
+**Database size for each tool**
+
 | Tool | Base | Space needs |
 |---|---|---|
 | BAKTA | db-light | 4.0G |
