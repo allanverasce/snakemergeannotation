@@ -262,13 +262,12 @@ output_dir/
 ├── patric_out/
 │   └── <genome>_patric.gb
 │
-├── merge_input/                             ← intermediate merge files
+├── merge_input/                              <- intermediate merge files
 │   ├── <genome>_patric.gb                   input base annotation
 │   ├── <genome>_patric_bakta_UPDATED.gb     after Bakta merge
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED.gb
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_UPDATED.gb
 │   ├── <genome>_patric_bakta_UPDATED_Prokka_UPDATED_dfast_finalversion.gb (defense islands) 
-│   ├── <genome>_cured.gb  ◀ FINAL
 │   └── hp_summary_report.tsv                consolidated HP reduction table
 │
 ├── merge_results/
@@ -277,6 +276,7 @@ output_dir/
 │   ├── <genome>_hp_reduction.png               per-genome reduction plot
 │   ├── hp_reduction_plot.png                   consolidated plot (all genomes)
 │   └── article_ready_table.csv                 table ready for publication
+|   ├── <genome>_cured.gb  ◀ FINAL
 │
 └── logs/
     ├── bakta/    <genome>.log
