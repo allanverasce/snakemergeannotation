@@ -73,9 +73,13 @@ docker run --rm \
 python pgap.py --update
 ```
 
-Database space requeriments
-4.0G	databases/db-light
 
+| Tool | Base | Space needs |
+|---|---|---|
+| BAKTA | db-light | 4.0G |
+| DFAST | dfast_db | 3.3G |
+| EGGNOG | eggnog_data | 48G |
+| PGAP | pgap_db | 39G |
 
 
 ## Step 4 — Open the interface
