@@ -300,18 +300,6 @@ output_dir/
 
 ---
 
-## Docker Images
-
-| Image | Base | Tool | Purpose |
-|---|---|---|---|
-| `engbio/bakta:v1` | oschwengers/bakta | Bakta ≥1.9 | Primary annotation |
-| `engbio/prokka:v1` | staphb/prokka | Prokka 1.14.6 | Secondary annotation |
-| `engbio/dfast:v1` | nigyta/dfast_core | DFAST 1.3.7 | Annotation + defense systems |
-| `engbio/patric:v1` | Ubuntu 20.04 + BV-BRC CLI | BV-BRC CLI 1.039 | Cloud-based annotation |
-| `engbio/merge:v1` | python:3.11-slim + BLAST+ | Custom Python pipeline | Merge and HP reduction |
-
----
-
 ## Merge Pipeline Parameters
 
 The merge step uses BLASTp to identify CDS that match between tools and transfers functional annotations. All parameters are configurable in `config.yaml` under the `merge` section.
