@@ -232,7 +232,7 @@ Remember to also set the taxonomy-related fields to `"unknown"` in `config.yaml`
 
 | Flag | Purpose |
 |---|---|
-| `base_tool` | Which tool's annotation is used as the local reference for the all-vs-all BLASTp comparison (`patric` or `bakta`) |
+| `base_tool` | Define a tool annotation as a local reference for the “all-versus-all” BLASTp comparison, for example:  (patric or bakta)|
 | `--jobs` | Maximum number of Snakemake jobs (genomes/rules) running in parallel |
 | `--resources mem_mb=... heavy_slots=... light_slots=...` | Caps total memory and limits how many resource-heavy vs. lightweight rules run at once |
 | `--keep-going` | Keeps running remaining jobs even if one job fails, instead of stopping the whole workflow |
