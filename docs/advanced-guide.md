@@ -238,6 +238,21 @@ Remember to also set the taxonomy-related fields to `"unknown"` in `config.yaml`
 | `--keep-going` | Keeps running remaining jobs even if one job fails, instead of stopping the whole workflow |
 | `--rerun-incomplete` | Re-runs any step that was left incomplete by an interrupted previous run |
 | `--latency-wait 60` | Waits up to 60 seconds for output files to appear before considering a step failed (useful on network filesystems) |
+| `--tool-order` | If the user wants to define their own tool order, they can choose from: bakta, prokka, dfast, pgap, eggnog. This removes the one set as the default by the base_tool parameter.|
+
+**Example using the --tool-order parameter**
+
+```
+snakemake --configfile config.yaml \
+  --cores 20 \
+  --jobs 2 \
+  --resources mem_mb=20000 heavy_slots=1 light_slots=4 \
+  --keep-going \
+  --rerun-incomplete \
+  --latency-wait 60 \
+  --config base_tool=patric
+  --tool-order bakta,prokka,dfast,pgap,eggnog
+```
 
 ---
 
