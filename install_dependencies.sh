@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 # =============================================================================
-# install_dependencies.sh — SnakeMergeAnnotation
+# install_dependencies.sh — SnakeMergeAnnotation (Local Install)
 # =============================================================================
 
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/allanverasce/snakemergeannotation.git}"
-INSTALL_DIR="${INSTALL_DIR:-$HOME}"
-VENV_DIR="${VENV_DIR:-$HOME/venv}"
 DB_BASE_DIR="${DB_BASE_DIR:-_AUTO_}"
-PROJECT_DIR="" # <--- CORREÇÃO AQUI
 
 BAKTA_DB_TYPE="${BAKTA_DB_TYPE:-light}"
 IMG_BAKTA="${IMG_BAKTA:-engbio/bakta:v1}"
 IMG_DFAST="${IMG_DFAST:-engbio/dfast:v1}"
-IMG_EGGNOG="${IMG_EGGNOG:-quay.io/biocontainers/eggnog-mapper:2.1.15--pyhdfd78af_0}"
 
 PGAP_SCRIPT_URL="${PGAP_SCRIPT_URL:-https://raw.githubusercontent.com/ncbi/pgap/prod/scripts/pgap.py}"
 
@@ -55,9 +51,6 @@ while [[ $# -gt 0 ]]; do
         --skip-pgap)       SKIP_PGAP=true; shift ;;
         --bakta-full)      BAKTA_DB_TYPE="full"; shift ;;
         --db-dir)          DB_BASE_DIR="$2"; shift 2 ;;
-        --venv-dir)        VENV_DIR="$2"; shift 2 ;;
-        --install-dir)     INSTALL_DIR="$2"; shift 2 ;;
-        --repo)            REPO_URL="$2"; shift 2 ;;
         --force)           FORCE=true; shift ;;
         -h|--help)         usage; exit 0 ;;
         *) die "Unknown option: $1 (use --help)" ;;
@@ -67,251 +60,169 @@ done
 OS_TYPE="unknown"
 OS_FAMILY="unknown"
 PKG_MANAGER="unknown"
-IS_WSL=false
 
 detect_os() {
     step "Detecting operating system"
     case "$(uname -s)" in
         Linux*)
             OS_TYPE="linux"
-            if grep -qi microsoft /proc/version 2>/dev/null; then
-                IS_WSL=true
-                log_warn "WSL environment detected. Docker Desktop (with WSL2 integration) or native dockerd inside WSL should work normally."
-            fi
             if [ -r /etc/os-release ]; then
                 . /etc/os-release
                 case "${ID:-}" in
-                    ubuntu|debian|raspbian|linuxmint|pop) OS_FAMILY="debian"; PKG_MANAGER="apt" ;;
-                    fedora)                               OS_FAMILY="fedora"; PKG_MANAGER="dnf" ;;
-                    rhel|centos|rocky|almalinux)          OS_FAMILY="rhel";   PKG_MANAGER="dnf" ;;
-                    arch|manjaro|endeavouros)              OS_FAMILY="arch";   PKG_MANAGER="pacman" ;;
-                    opensuse*|sles)                        OS_FAMILY="suse";   PKG_MANAGER="zypper" ;;
-                    *)
-                        case "${ID_LIKE:-}" in
-                            debian) OS_FAMILY="debian"; PKG_MANAGER="apt" ;;
-                            rhel|fedora) OS_FAMILY="rhel"; PKG_MANAGER="dnf" ;;
-                            arch) OS_FAMILY="arch"; PKG_MANAGER="pacman" ;;
-                            suse) OS_FAMILY="suse"; PKG_MANAGER="zypper" ;;
-                            *) OS_FAMILY="unknown"; PKG_MANAGER="unknown" ;;
-                        esac
-                        ;;
+                    ubuntu|debian|linuxmint|pop) OS_FAMILY="debian"; PKG_MANAGER="apt" ;;
+                    *) OS_FAMILY="unknown"; PKG_MANAGER="unknown" ;;
                 esac
             fi
             ;;
-        Darwin*)
-            OS_TYPE="macos"; OS_FAMILY="macos"; PKG_MANAGER="brew"
-            ;;
-        MINGW*|MSYS*|CYGWIN*)
-            OS_TYPE="windows"
-            ;;
-        *)
-            OS_TYPE="unknown"
-            ;;
+        *) OS_TYPE="unknown" ;;
     esac
-
-    case "$OS_TYPE" in
-        linux)   log_ok "Linux detected — distribution: ${ID:-unknown} (family: $OS_FAMILY, package manager: $PKG_MANAGER)" ;;
-        macos)   log_ok "macOS detected" ;;
-        windows) die "Native Windows (outside WSL) is not directly supported." ;;
-        *)       die "Unrecognized operating system ($(uname -s))." ;;
-    esac
+    log_ok "OS detected: $OS_TYPE ($OS_FAMILY)"
 }
 
-resolve_db_base_dir() {
-    if [ "$DB_BASE_DIR" = "_AUTO_" ]; then
-        if [ "$OS_TYPE" = "macos" ]; then
-            DB_BASE_DIR="$HOME/snakeMergeAnnotation/databases"
-        else
-            DB_BASE_DIR="/opt/snakeMergeAnnotation/databases"
-        fi
-        log_info "Database directory not provided; using default for $OS_TYPE: $DB_BASE_DIR"
+setup_directories() {
+    step "Setting up local isolation directories"
+    
+    # Define o BASE_DIR como a pasta onde este script está localizado
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    BASE_DIR="$SCRIPT_DIR"
+    
+    # Se o script estiver sendo rodado de dentro do repositório já clonado
+    if [ -d "$SCRIPT_DIR/.git" ] || [ -f "$SCRIPT_DIR/Snakefile" ]; then
+        PROJECT_DIR="$SCRIPT_DIR"
+        SKIP_CLONE=true
+        log_info "Running inside project directory: $PROJECT_DIR"
+    else
+        PROJECT_DIR="$BASE_DIR/pipeline"
+        log_info "Project will be cloned to: $PROJECT_DIR"
+        mkdir -p "$PROJECT_DIR"
     fi
+
+    VENV_DIR="${VENV_DIR:-$PROJECT_DIR/venv}"
+    
+    if [ "$DB_BASE_DIR" = "_AUTO_" ]; then
+        DB_BASE_DIR="$BASE_DIR/databases"
+    fi
+    mkdir -p "$DB_BASE_DIR"
+    
+    log_info "Virtual environment: $VENV_DIR"
+    log_info "Database directory: $DB_BASE_DIR"
 }
 
 do_install_prereqs() {
     step "Installing system prerequisites"
-    if [ "$OS_TYPE" = "linux" ]; then
-        case "$PKG_MANAGER" in
-            apt)
-                sudo apt-get update -y
-                sudo apt-get install -y ca-certificates curl git build-essential python3-venv python3-pip
-                ;;
-            dnf)
-                sudo dnf install -y ca-certificates curl git @development-tools || \
-                sudo dnf install -y ca-certificates curl git gcc gcc-c++ make
-                ;;
-            pacman)
-                sudo pacman -Sy --noconfirm --needed ca-certificates curl git base-devel
-                ;;
-            zypper)
-                sudo zypper --non-interactive install ca-certificates curl git gcc gcc-c++ make
-                ;;
-            *)
-                log_warn "Package manager not identified; assuming curl/git/python3-venv are already installed."
-                ;;
-        esac
+    if [ "$OS_TYPE" = "linux" ] && [ "$PKG_MANAGER" = "apt" ]; then
+        sudo apt-get update -y
+        sudo apt-get install -y ca-certificates curl wget git build-essential python3-venv python3-pip python3-tk gzip tar
     fi
 }
 
 install_docker_linux() {
-    if command -v docker >/dev/null 2>&1; then
-        log_ok "Docker already installed: $(docker --version)"
-        return
-    fi
+    if command -v docker >/dev/null 2>&1; then return; fi
     log_info "Installing Docker Engine..."
     curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
     sudo sh /tmp/get-docker.sh
     rm -f /tmp/get-docker.sh
     sudo systemctl enable --now docker 2>/dev/null || true
-    log_ok "Docker installed."
 }
 
 setup_docker_rootless_group() {
-    step "Configuring Docker without requiring sudo ('docker' group)"
-    if ! getent group docker >/dev/null 2>&1; then
-        sudo groupadd docker
-    fi
-    if ! id -nG "$USER" | grep -qw docker; then
-        sudo usermod -aG docker "$USER"
-        NEED_RELOGIN=true
-    fi
+    if ! getent group docker >/dev/null 2>&1; then sudo groupadd docker; fi
+    if ! id -nG "$USER" | grep -qw docker; then sudo usermod -aG docker "$USER"; fi
+    
     if docker info >/dev/null 2>&1; then
         DOCKER_CMD="docker"
-        log_ok "Docker responds without sudo in this session."
     else
         DOCKER_CMD="sudo docker"
     fi
 }
 
-setup_docker_macos() {
-    step "Configuring Docker on macOS"
-    if command -v docker >/dev/null 2>&1; then
-        log_ok "Docker already installed"
-    elif command -v brew >/dev/null 2>&1; then
-        brew install --cask docker
-    fi
-    DOCKER_CMD="docker"
-}
-
 do_install_docker() {
-    if [ "$SKIP_DOCKER" = true ]; then
-        DOCKER_CMD="docker"
-        return
-    fi
-    step "Installing/checking Docker"
-    case "$OS_TYPE" in
-        linux)
-            install_docker_linux
-            setup_docker_rootless_group
-            ;;
-        macos)
-            setup_docker_macos
-            ;;
-    esac
-}
-
-do_setup_venv() {
-    if [ "$SKIP_VENV" = true ]; then return; fi
-    step "Creating Python virtual environment at: $VENV_DIR"
-    if [ -f "$VENV_DIR/bin/activate" ] && [ "$FORCE" != true ]; then
-        log_ok "Virtualenv already exists at $VENV_DIR"
-    else
-        rm -rf "$VENV_DIR"
-        python3 -m venv "$VENV_DIR"
-        log_ok "Virtualenv created at $VENV_DIR"
-    fi
-    source "$VENV_DIR/bin/activate"
-    pip install --upgrade pip --quiet
-    pip install snakemake --quiet
-    log_ok "Snakemake installed: $(snakemake --version)"
-    deactivate
+    if [ "$SKIP_DOCKER" = true ]; then DOCKER_CMD="docker"; return; fi
+    step "Checking Docker setup"
+    install_docker_linux
+    setup_docker_rootless_group
+    log_ok "Docker is ready."
 }
 
 do_clone_repo() {
     if [ "$SKIP_CLONE" = true ]; then return; fi
     step "Cloning SnakeMergeAnnotation repository"
-    mkdir -p "$INSTALL_DIR"
-    local dir_name="$(basename "$REPO_URL" .git)"
-    PROJECT_DIR="$INSTALL_DIR/$dir_name"
-    if [ -d "$PROJECT_DIR/.git" ] && [ "$FORCE" != true ]; then
-        log_ok "Repository already cloned at $PROJECT_DIR"
+    
+    if { [ -d "$PROJECT_DIR/.git" ] || [ -f "$PROJECT_DIR/Snakefile" ]; } && [ "$FORCE" != true ]; then
+        log_ok "Arquivos do projeto já identificados em $PROJECT_DIR. Pulando clonagem."
     else
-        if [ -d "$PROJECT_DIR" ]; then
-            log_warn "Removing existing directory $PROJECT_DIR to clone again..."
-            rm -rf "$PROJECT_DIR"
+        if [ -d "$PROJECT_DIR" ] && [ "$(ls -A "$PROJECT_DIR" 2>/dev/null)" ]; then
+            log_warn "A pasta $PROJECT_DIR já existe e contém arquivos. Pulando clonagem por segurança."
+            return
         fi
-        (cd "$INSTALL_DIR" && git clone "$REPO_URL")
-        log_ok "Repository cloned at $PROJECT_DIR"
+        git clone "$REPO_URL" "$PROJECT_DIR"
+        log_ok "Repositório clonado."
     fi
+}
+
+do_setup_venv() {
+    if [ "$SKIP_VENV" = true ]; then return; fi
+    step "Creating isolated Python virtual environment"
+    if [ ! -f "$VENV_DIR/bin/activate" ] || [ "$FORCE" = true ]; then
+        rm -rf "$VENV_DIR"
+        python3 -m venv "$VENV_DIR"
+    fi
+    source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip --quiet
+    pip install snakemake flask --quiet
+    log_ok "Virtualenv ready inside project. Snakemake and Flask installed."
+    deactivate
 }
 
 prepare_db_dirs() {
-    step "Preparing database directory: $DB_BASE_DIR"
-    if [ "$OS_TYPE" = "linux" ]; then
-        sudo mkdir -p "$DB_BASE_DIR"/{bakta_db,dfast_db,eggnog_db}
-        sudo chown -R "$USER":"$(id -gn)" "$DB_BASE_DIR"
-    else
-        mkdir -p "$DB_BASE_DIR"/{bakta_db,dfast_db,eggnog_db}
-    fi
-    log_ok "Directories ready and permissions set for '$USER'."
+    step "Preparing database directories"
+    mkdir -p "$DB_BASE_DIR"/{bakta_db,dfast_db,eggnog_db}
 }
 
-dir_has_content() {
-    [ -d "$1" ] && [ -n "$(ls -A "$1" 2>/dev/null)" ]
-}
+dir_has_content() { [ -d "$1" ] && [ -n "$(ls -A "$1" 2>/dev/null)" ]; }
 
 download_bakta_db() {
     if [ "$SKIP_BAKTA_DB" = true ]; then return; fi
-    if dir_has_content "$DB_BASE_DIR/bakta_db" && [ "$FORCE" != true ]; then
-        log_ok "Bakta database already seems to exist at $DB_BASE_DIR/bakta_db."
-        return
-    fi
-    step "Downloading Bakta database (type: $BAKTA_DB_TYPE)"
-    
-    $DOCKER_CMD run --rm \
-        --entrypoint sh \
-        -v "$DB_BASE_DIR/bakta_db:/db" \
-        oschwengers/bakta:latest \
-        -c 'BAKTA_BIN=$(find / -name bakta_db -type f 2>/dev/null | grep "bin/bakta_db" | head -n 1); if [ -z "$BAKTA_BIN" ]; then echo "[ERROR] bakta_db not found in official image!"; exit 1; fi; export PATH="$(dirname "$BAKTA_BIN"):$PATH"; "$BAKTA_BIN" download --output /db --type '"$BAKTA_DB_TYPE"
-        
-    log_ok "Bakta database downloaded to $DB_BASE_DIR/bakta_db"
+    if dir_has_content "$DB_BASE_DIR/bakta_db" && [ "$FORCE" != true ]; then log_ok "Bakta DB exists."; return; fi
+    step "Downloading Bakta database"
+    $DOCKER_CMD run --rm --entrypoint sh -v "$DB_BASE_DIR/bakta_db:/db" oschwengers/bakta:latest -c 'BAKTA_BIN=$(find / -name bakta_db -type f 2>/dev/null | grep "bin/bakta_db" | head -n 1); export PATH="$(dirname "$BAKTA_BIN"):$PATH"; "$BAKTA_BIN" download --output /db --type '"$BAKTA_DB_TYPE"
 }
 
 download_dfast_db() {
     if [ "$SKIP_DFAST_DB" = true ]; then return; fi
-    if dir_has_content "$DB_BASE_DIR/dfast_db" && [ "$FORCE" != true ]; then
-        log_ok "DFAST database already seems to exist."
-        return
-    fi
-    step "Downloading DFAST databases (proteins, COG/CDD, TIGRFAMs)"
-    
-    log_info "  -> Reference protein database..."
-    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
-        "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --protein dfast
-        
-    log_info "  -> COG/CDD database..."
-    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
-        "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --cdd Cog
-        
-    log_info "  -> TIGRFAMs (HMM) database..."
-    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" \
-        "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --hmm TIGR
-        
-    log_ok "DFAST databases downloaded."
+    if dir_has_content "$DB_BASE_DIR/dfast_db" && [ "$FORCE" != true ]; then log_ok "DFAST DB exists."; return; fi
+    step "Downloading DFAST databases"
+    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --protein dfast
+    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --cdd Cog
+    $DOCKER_CMD run --rm --entrypoint python -v "$DB_BASE_DIR/dfast_db:/dfast_core/db" "$IMG_DFAST" /dfast_core/scripts/file_downloader.py --hmm TIGR
 }
 
 download_eggnog_db() {
-    if [ "$SKIP_EGGNOG_DB" = true ]; then return; fi
-    if dir_has_content "$DB_BASE_DIR/eggnog_db" && [ "$FORCE" != true ]; then
-        log_ok "eggNOG database already seems to exist."
+    if [ "$SKIP_EGGNOG_DB" = true ]; then 
         return
     fi
-    step "Downloading eggNOG-mapper database (image: $IMG_EGGNOG)"
-    
-    $DOCKER_CMD run --rm --entrypoint download_eggnog_data.py -v "$DB_BASE_DIR/eggnog_db:/eggnog_db" \
-        "$IMG_EGGNOG" --data_dir /eggnog_db -y
-        
-    log_ok "eggNOG-mapper database downloaded."
+
+    local eggnog_dir="$DB_BASE_DIR/eggnog_db"
+
+    if dir_has_content "$eggnog_dir" && [ "$FORCE" != true ]; then
+        log_ok "eggNOG database exists."
+        return
+    fi
+
+    step "Downloading eggNOG database"
+
+    mkdir -p "$eggnog_dir"
+
+    log_info "Downloading eggNOG data using $IMG_EGGNOG"
+
+    $DOCKER_CMD run --rm \
+        -v "$eggnog_dir:/opt/snakemergeannotation/databases" \
+        "$IMG_EGGNOG" \
+        download_eggnog_data.py \
+        --data_dir /opt/snakemergeannotation/databases \
+        -y
+
+    log_ok "eggNOG database installed in $eggnog_dir"
 }
 
 do_download_databases() {
@@ -324,9 +235,7 @@ do_download_databases() {
 
 do_setup_pgap() {
     if [ "$SKIP_PGAP" = true ]; then return; fi
-    if [ -z "$PROJECT_DIR" ] || [ ! -d "$PROJECT_DIR" ]; then return; fi
-
-    step "Setting up PGAP (database stays in ~/.pgap)"
+    step "Setting up PGAP"
     cd "$PROJECT_DIR"
 
     if [ ! -f pgap.py ] || [ "$FORCE" = true ]; then
@@ -334,28 +243,34 @@ do_setup_pgap() {
         chmod +x pgap.py
     fi
 
-    log_info "Updating/downloading the PGAP database..."
-    python3 pgap.py --update
-    log_ok "PGAP updated."
+    if docker info >/dev/null 2>&1; then
+        python3 pgap.py --update
+    else
+        log_warn "Docker needs sudo. Preserving seu HOME folder path during setup..."
+        sudo HOME="$HOME" python3 pgap.py --update
+        if [ -d "$HOME/.pgap" ]; then
+            sudo chown -R "$USER":"$(id -gn)" "$HOME/.pgap"
+        fi
+    fi
+    log_ok "PGAP setup complete."
 }
 
 print_summary() {
-    echo
-    echo -e "${C_BOLD}================================================================${C_NC}"
-    echo -e "${C_BOLD} Installation complete — SnakeMergeAnnotation${C_NC}"
-    echo -e "${C_BOLD}================================================================${C_NC}"
+    echo -e "\n${C_BOLD}================================================================${C_NC}"
+    echo -e "${C_BOLD} Sistema Instalado com Sucesso${C_NC}"
+    echo -e " - Diretório da Pipeline: $PROJECT_DIR"
+    echo -e " - Ambiente Virtual:      $VENV_DIR"
+    echo -e " - Diretório de DBs:      $DB_BASE_DIR"
+    echo -e "${C_BOLD}================================================================${C_NC}\n"
 }
-
-NEED_RELOGIN=false
-DOCKER_CMD="docker"
 
 main() {
     detect_os
-    resolve_db_base_dir
+    setup_directories
     do_install_prereqs
     do_install_docker
-    do_setup_venv
     do_clone_repo
+    do_setup_venv
     do_download_databases
     do_setup_pgap
     print_summary
