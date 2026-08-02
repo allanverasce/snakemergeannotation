@@ -10,22 +10,9 @@
 #             --latency-wait 60 \
 #             --rerun-incomplete
 #
-# NOTA IMPORTANTE (fix de "Missing output files"):
-#   --latency-wait 60  evita falsos-positivos de "arquivo de saída ausente"
-#   quando o output_dir está em filesystem de rede (NFS/CIFS) e há atraso
-#   entre o container terminar de escrever e o Snakemake enxergar o arquivo.
-#
-#   heavy_slots / light_slots controlam de fato quantos jobs pesados
-#   (bakta/prokka/dfast/patric/pgap/eggnog) e leves (merge/copy) rodam em
-#   paralelo, calculados a partir de config["resources"] e config["general"].
-#
-# ATENÇÃO — override de base_tool via linha de comando:
-#   `--config base_tool=<ferramenta>` sobrescreve o base_tool do config.yaml.
-#   A ferramenta escolhida como base_tool PRECISA estar habilitada
-#   (<ferramenta>.enabled: true), senão o pipeline aborta cedo com uma
-#   mensagem clara em vez de um MissingInputException confuso. Para trocar
-#   de base_tool E habilitar a ferramenta na mesma chamada:
-#     --config base_tool=dfast dfast.enabled=true
+# Para definir a ordem das ferramentas (opcional):
+#   --config merge.tool_order=prokka,dfast,pgap,eggnog
+# (OBS: a ferramenta base e demais habilitadas serão adicionadas automaticamente)
 # =============================================================================
 import os
 import glob
@@ -84,11 +71,7 @@ def ensure_writable_dir(path):
     return path
 
 
-def verify_output(path, tool_name, sample, search_dir=None, patterns=None):
-    """Confere se o arquivo de saída esperado existe e não está vazio.
-    Se não existir no caminho exato, tenta localizar por glob (fallback)
-    e copia para o destino correto. Levanta erro claro se nada for encontrado,
-    em vez de deixar o Snakemake reportar um genérico 'Missing output files'."""
+def verify_output(path, tool_name, sample, search_dir=None, patterns=None):    
     if os.path.exists(path) and os.path.getsize(path) > 0:
         return path
 
@@ -284,6 +267,75 @@ if not _ENABLED_MAP[BASE_TOOL]:
     )
 
 # ====================
+# TOOL ORDER (dinâmica com exclusão da base_tool)
+# ====================
+_TOOL_ORDER_RAW = config.get("merge", {}).get("tool_order", None)
+VALID_STEPS = {"patric", "bakta", "prokka", "dfast", "pgap", "eggnog"}
+
+# Monta lista de ferramentas habilitadas EXCLUINDO a base_tool
+enabled_secondary = []
+if PATRIC_ENABLED and BASE_TOOL != "patric":
+    enabled_secondary.append("patric")
+if BAKTA_ENABLED and BASE_TOOL != "bakta":
+    enabled_secondary.append("bakta")
+if PROKKA_ENABLED and BASE_TOOL != "prokka":
+    enabled_secondary.append("prokka")
+if DFAST_ENABLED and BASE_TOOL != "dfast":
+    enabled_secondary.append("dfast")
+if PGAP_ENABLED and BASE_TOOL != "pgap":
+    enabled_secondary.append("pgap")
+if EGGNOG_ENABLED and BASE_TOOL != "eggnog":
+    enabled_secondary.append("eggnog")
+
+if _TOOL_ORDER_RAW:
+    # Divide a string, valida e mantém ordem, removendo duplicatas
+    order_list = []
+    seen = set()
+    for item in str(_TOOL_ORDER_RAW).split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if item not in VALID_STEPS:
+            raise ValueError(f"Ferramenta inválida em merge.tool_order: '{item}'. Use: {sorted(VALID_STEPS)}")
+        if item not in seen:
+            seen.add(item)
+            order_list.append(item)
+    # Filtra apenas as ferramentas que estão habilitadas e não são a base
+    order_list = [t for t in order_list if t in enabled_secondary]
+    # Adiciona, no final, ferramentas habilitadas que não apareceram na ordem
+    for t in enabled_secondary:
+        if t not in seen:
+            order_list.append(t)
+            print(f"[Aviso] Ferramenta '{t}' habilitada não estava em merge.tool_order; adicionada ao final.")
+else:
+    # Ordem padrão (definida no config ou default) – usa apenas as habilitadas
+    default_order = ["bakta", "prokka", "dfast", "pgap", "eggnog"]  # padrão do config
+    order_list = [t for t in default_order if t in enabled_secondary]
+    # Adiciona eventuais habilitadas que não estão no default (ex.: patric, se não for base)
+    for t in enabled_secondary:
+        if t not in order_list:
+            order_list.append(t)
+
+TOOL_ORDER = ",".join(order_list)
+
+# String para usar nos nomes de arquivo (substitui vírgulas por hífen)
+ORDER_STR = "-".join(order_list)
+
+# TOOL_ORDER_CUSTOM indica se o usuário de fato definiu 'merge.tool_order'
+# (mesmo que o valor coincida com a ordem padrão). Só nesse caso a flag
+# --tool-order é passada ao container e o sufixo __ORDER_STR é usado nos
+# nomes dos arquivos finais; caso contrário (tool_order ausente/comentado no
+# config.yaml), o pipeline roda no modo "padrão" do container, sem sufixo.
+TOOL_ORDER_CUSTOM = bool(_TOOL_ORDER_RAW)
+FILENAME_SUFFIX = f"__{ORDER_STR}" if TOOL_ORDER_CUSTOM else ""
+
+print(f"[SnakeMergeAnnotation] Ordem final das ferramentas (excluindo base_tool '{BASE_TOOL}'): {TOOL_ORDER}")
+if TOOL_ORDER_CUSTOM:
+    print(f"[SnakeMergeAnnotation] tool_order customizado -> sufixo dos relatórios: {ORDER_STR}")
+else:
+    print("[SnakeMergeAnnotation] tool_order não definido no config -> usando nomes padrão (sem sufixo)")
+
+# ====================
 # PGAP CONFIG
 # ====================
 PGAP_SCRIPT = os.path.join(SNAKEFILE_DIR, config.get("pgap", {}).get("script_path", "pgap.py"))
@@ -316,6 +368,13 @@ print(f"[SnakeMergeAnnotation] {len(SAMPLES)} genome(s) detected")
 # =====================
 CURED_PATTERN = "{sample}_cured.gb"
 
+# Pasta (dentro de merge_results) onde os resultados finais de um lote ficam
+# organizados. Como cada execução normalmente processa um único organismo,
+# usa-se o nome da própria amostra; com múltiplas amostras no mesmo lote
+# (que compartilham um único relatório/gráfico/tabela do merge), usa-se uma
+# pasta de lote para não escolher arbitrariamente uma das amostras.
+RESULT_BATCH_DIR = SAMPLES[0] if len(SAMPLES) == 1 else "batch_" + "-".join(SAMPLES)
+
 # =====================
 # PGAP RATE LIMIT CONTROL
 # =====================
@@ -334,7 +393,7 @@ rule all:
         expand(os.path.join(DIR_DFAST, "{sample}_dfast.gbk"), sample=SAMPLES) if DFAST_ENABLED else [],
         expand(os.path.join(DIR_PGAP, "{sample}", "{sample}_pgap.gbk"), sample=SAMPLES) if PGAP_ENABLED else [],
         expand(os.path.join(DIR_MERGE, CURED_PATTERN), sample=SAMPLES),
-        expand(os.path.join(DIR_RESULT, "{sample}_cured.gb"), sample=SAMPLES)
+        expand(os.path.join(DIR_RESULT, "{sample}", "{sample}_cured.gb"), sample=SAMPLES)
 
 # ======
 # BAKTA
@@ -379,8 +438,6 @@ rule annotate_bakta:
                 "/input/{{wildcards.sample}}.fasta" \
             > {{log[0]}} 2>&1
         """)
-        # Confirma a saída; se o nome/local vier diferente (ex.: versões distintas
-        # de imagem Bakta), localiza por glob e corrige em vez de falhar cego.
         verify_output(
             output.gbff, "bakta", wildcards.sample,
             search_dir=params.outdir,
@@ -635,12 +692,7 @@ rule prepare_merge_input:
 # ===========
 # EXTRACT CDS (somente se eggNOG habilitado)
 # ===========
-def get_base_annotation_file(wildcards):
-    """Retorna o caminho do arquivo de anotação ORIGINAL da ferramenta base
-    (ex: saída direta de annotate_bakta/annotate_dfast/...), que já é um
-    output estaticamente declarado por outra regra. Usar isso em vez do
-    caminho copiado dentro de merge_input/ evita MissingInputException,
-    já que `output:` não pode ser função no Snakemake >= 8."""
+def get_base_annotation_file(wildcards): 
     return get_base_file_path(wildcards.sample, BASE_TOOL)
 
 
@@ -878,15 +930,13 @@ if PGAP_ENABLED:
 # RUN MERGE - depende do sinal e do eggnog (se habilitado)
 # =========
 rule run_merge:
-    input:
-        # Depende do sinal para garantir que prepare_merge_input foi executado
-        expand(os.path.join(DIR_MERGE, ".merge_inputs_ready.{sample}"), sample=SAMPLES),
-        # Se eggnog habilitado, depende também do arquivo eggnog (movido por move_eggnog_result)
+    input:       
+        expand(os.path.join(DIR_MERGE, ".merge_inputs_ready.{sample}"), sample=SAMPLES),        
         expand(os.path.join(DIR_MERGE, "{sample}_eggnog.emapper.annotations"), sample=SAMPLES) if EGGNOG_ENABLED else []
-    output:
-        report    = os.path.join(DIR_MERGE,  "hp_summary_report.tsv"),
-        hp_plot   = os.path.join(DIR_RESULT, "hp_reduction_plot.png"),
-        art_table = os.path.join(DIR_RESULT, "article_ready_table.csv"),
+    output:       
+        report    = os.path.join(DIR_MERGE,  f"hp_summary_report{FILENAME_SUFFIX}.tsv"),
+        hp_plot   = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"hp_reduction_plot{FILENAME_SUFFIX}.png"),
+        art_table = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"article_ready_table{FILENAME_SUFFIX}.csv"),
         cured     = expand(os.path.join(DIR_MERGE, CURED_PATTERN), sample=SAMPLES)
     threads: max(1, THREADS // MAX_JOBS)
     resources:
@@ -897,6 +947,7 @@ rule run_merge:
         os.path.join(DIR_LOGS, "merge", "pipeline.log")
     run:
         ensure_writable_dir(DIR_RESULT)
+        ensure_writable_dir(os.path.join(DIR_RESULT, RESULT_BATCH_DIR))
         ensure_writable_dir(os.path.dirname(log[0]))
         flags = []
         if not PATRIC_ENABLED: flags.append("--no-patric")
@@ -906,6 +957,8 @@ rule run_merge:
         if not PGAP_ENABLED:   flags.append("--no-pgap")
         if not EGGNOG_ENABLED: flags.append("--no-eggnog")
         flags.append(f"--base-tool {BASE_TOOL}")
+        if TOOL_ORDER_CUSTOM and TOOL_ORDER:
+            flags.append(f"--tool-order {TOOL_ORDER}")
         timeout_min = get_timeout_min("run_merge")
         shell(f"""
             set -euo pipefail
@@ -922,14 +975,6 @@ rule run_merge:
                 --jobs       {MERGE_JOBS} \
                 {" ".join(flags)} \
             > {{log[0]}} 2>&1
-            # Fixer de permissão via container: usa a MESMA imagem e o MESMO
-            # -u que escreveu os arquivos, garantindo que o "dono" bate e o
-            # chmod funciona de verdade — mesmo se o Docker remapear UIDs
-            # (userns-remap), pois o mapeamento é determinístico: o mesmo -u
-            # sempre vira o mesmo dono real no host, então esse segundo
-            # container consegue alterar a permissão do que o primeiro criou.
-            # Isso evita 'PermissionError' do Snakemake ao dar touch() nos
-            # outputs logo depois que o job termina.
             docker run --rm \
                 -u $(id -u):$(id -g) \
                 -v "{DIR_MERGE}:/data" \
@@ -938,19 +983,125 @@ rule run_merge:
                 {IMG_MERGE} \
                 -R a+rwX /data /results 2>/dev/null || true
         """)
-        for f in [output.report, output.hp_plot, output.art_table]:
-            verify_output(f, "run_merge", "all_samples")
+       
+        def _shallowest(paths):
+            """Ordena por profundidade (menos subpastas primeiro), preferindo
+            arquivos já no lugar certo sobre os que estão em subpastas."""
+            return sorted(paths, key=lambda p: p.count(os.sep))
+
+        def resolve_output(out_file, possible_names, search_dir=None):           
+            if search_dir is None:
+                search_dir = os.path.dirname(out_file)
+            ensure_writable_dir(os.path.dirname(out_file))
+            found = None
+
+            for name in possible_names:
+                matches = glob.glob(os.path.join(search_dir, "**", name), recursive=True)
+                matches = [m for m in matches if os.path.getsize(m) > 0]
+                if matches:
+                    found = _shallowest(matches)[0]
+                    break
+
+            if found:
+                if os.path.abspath(found) != os.path.abspath(out_file):
+                    shutil.move(found, out_file)
+                    print(f"[run_merge] Arquivo encontrado como '{found}' -> movido para '{out_file}'")
+                else:
+                    print(f"[run_merge] Arquivo de saída já existe: {out_file}")
+                return
+
+            # Fallback: busca recursiva por qualquer arquivo com padrão semelhante
+            base = os.path.basename(out_file)
+            # Remove sufixo dinâmico (parte após "__")
+            if "__" in base:
+                prefix = base.split("__")[0]
+                ext = os.path.splitext(base)[1]
+                pattern = prefix + "*" + ext
+            else:
+                pattern = base
+            matches = glob.glob(os.path.join(search_dir, "**", pattern), recursive=True)
+            matches = [m for m in matches if os.path.getsize(m) > 0]
+            if matches:
+                m = _shallowest(matches)[0]
+                shutil.move(m, out_file)
+                print(f"[run_merge] Arquivo encontrado por padrão '{pattern}': '{m}' -> movido para '{out_file}'")
+                return
+
+            # Erro detalhado com listagem recursiva do diretório
+            if os.path.exists(search_dir):
+                dir_content = "\n".join(
+                    sorted(
+                        os.path.relpath(os.path.join(root, f), search_dir)
+                        for root, _, files in os.walk(search_dir)
+                        for f in files
+                    )
+                ) or "(diretório vazio)"
+            else:
+                dir_content = "diretório não existe"
+            raise RuntimeError(
+                f"[run_merge] Nenhum arquivo de saída encontrado para {out_file}. "
+                f"Padrões procurados (recursivamente em '{search_dir}'): {possible_names} e '{pattern}'. "
+                f"Conteúdo de {search_dir}:\n{dir_content}"
+            )
+
+        # Mapeia saída esperada -> (possíveis nomes fixos/alternativos, diretório de busca)
+        output_map = {
+            output.report: (
+                ["hp_summary_report.tsv", f"hp_summary_report__{ORDER_STR}.tsv"],
+                None,  # busca no próprio diretório do output (DIR_MERGE)
+            ),
+            output.hp_plot: (
+                ["hp_reduction_plot.png", f"hp_reduction_plot__{ORDER_STR}.png"],
+                DIR_RESULT,  # o container escreve na raiz de merge_results, não na pasta do organismo
+            ),
+            output.art_table: (
+                ["article_ready_table.csv", f"article_ready_table__{ORDER_STR}.csv"],
+                DIR_RESULT,
+            ),
+        }
+        for out_file, (possible_names, search_dir) in output_map.items():
+            resolve_output(out_file, possible_names, search_dir=search_dir)
+
+        # Arquivos '{sample}_cured.gb' — o container também pode gravá-los
+        # como '{sample}_cured__{ORDER_STR}.gb' quando um tool_order
+        # customizado é usado, então precisam do mesmo tratamento.
+        for sample, cured_out in zip(SAMPLES, output.cured):
+            resolve_output(cured_out, [
+                f"{sample}_cured.gb",
+                f"{sample}_cured__{ORDER_STR}.gb"
+            ])
+
+        # Limpa o que sobrou solto na raiz de merge_results (ex.: a pasta
+        # 'order__<sufixo>/' que o container do merge cria e que já foi
+        # esvaziada dos arquivos úteis acima). Quando o lote tem uma única
+        # amostra, o restante é movido para dentro da pasta do organismo por
+        # segurança (arquivamento) em vez de apagado.
+        for entry in os.listdir(DIR_RESULT):
+            entry_path = os.path.join(DIR_RESULT, entry)
+            if entry == RESULT_BATCH_DIR or entry in SAMPLES or not os.path.isdir(entry_path):
+                continue
+            if entry.startswith("order__"):
+                if len(SAMPLES) == 1:
+                    dest = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, entry)
+                    if os.path.exists(dest):
+                        shutil.rmtree(dest)
+                    shutil.move(entry_path, dest)
+                    print(f"[run_merge] Pasta bruta '{entry_path}' movida para '{dest}'")
+                else:
+                    print(f"[run_merge] Aviso: pasta bruta '{entry_path}' não foi movida "
+                          f"(lote com múltiplas amostras — sem organismo único para associá-la).")
 
 rule copy_cured_results:
     input:
         cured = os.path.join(DIR_MERGE, CURED_PATTERN)
     output:
-        result_cured = os.path.join(DIR_RESULT, "{sample}_cured.gb")
+        result_cured = os.path.join(DIR_RESULT, "{sample}", "{sample}_cured.gb")
     resources:
         light_slots = 1
     retries: MAX_RETRIES
     shell:
         """
         set -euo pipefail
+        mkdir -p "$(dirname {output.result_cured})"
         cp {input.cured} {output.result_cured}
         """
