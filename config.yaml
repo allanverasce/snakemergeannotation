@@ -1,6 +1,6 @@
 paths:
-  fasta_dir: /home/allan/projeto/input
-  output_dir: /home/allan/projeto/input/results
+  fasta_dir: <inputPath>
+  output_dir: <outputPath>
 general:
   threads: 20
 resources:
@@ -9,12 +9,12 @@ resources:
 bakta:
   enabled: true
   docker_image: engbio/bakta:v1
-  db_path: /home/allan/projeto/databases/db-light
+  db_path: <pathDatabase>/db-light
   db_type: light
   genus: Streptomyces
   species: Streptomyces
   strain: Streptomyces
-  gram: +
+  gram: '-'
   translation_table: 11
   min_contig_length: 100
   compliant: false
@@ -27,24 +27,24 @@ prokka:
 dfast:
   enabled: true
   docker_image: engbio/dfast:v1
-  db_path: /home/allan/projeto/databases/dfast_db
-  organism: Streptomyces
+  db_path: <pathDatabase>/dfast_db
+  organism: unknown
 patric:
-  enabled: false
+  enabled: true
   docker_image: engbio/patric:v1
-  username: allanverasce
-  password: '@biotec100'
+  username: username
+  password: 'password'
   taxonomy_id: 1883
   description: Bacteria
   workspace_output_dir: home
   monitor_interval: 60
 eggnog:
-  enabled: false
-  docker_image: quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1
-  db_path: /home/allan/projeto/databases/eggnog_data
+  enabled: true
+  docker_image: engbio/eggnog:v2.1.15
+  db_path: <pathDatabase>/eggnog_data
   sensmode: diamond
 pgap:
-  enabled: false
+  enabled: true
   script_path: pgap.py
   mem: 18g
   cpus: 18
@@ -55,9 +55,10 @@ merge:
   min_pident: 95
   min_qcov: 0.9
   jobs: 2
+  #tool_order: bakta,prokka,dfast,pgap,eggnog
 watchdog:
-  max_retries: 3
+  max_retries: 4
   inactivity_timeout: 2880m
-  check_interval: 60s
-base_tool: prokka
+  check_interval: 240s
+base_tool: patric
 mode: genomic
