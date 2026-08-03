@@ -46,8 +46,7 @@ def mem_to_mb(mem_str):
         return num
 
 
-def parse_timeout(timeout_str):
-    """Converte string como '240m' ou '2h' para minutos."""
+def parse_timeout(timeout_str):   
     match = re.match(r'^(\d+)([mh])$', str(timeout_str))
     if not match:
         raise ValueError(f"Formato inválido para timeout: {timeout_str}")
@@ -71,7 +70,7 @@ def ensure_writable_dir(path):
     return path
 
 
-def verify_output(path, tool_name, sample, search_dir=None, patterns=None):    
+def verify_output(path, tool_name, sample, search_dir=None, patterns=None):
     if os.path.exists(path) and os.path.getsize(path) > 0:
         return path
 
@@ -237,11 +236,6 @@ TOOL_EXT = {
 }
 BASE_EXT = TOOL_EXT.get(BASE_TOOL, ".gb")
 
-# Validação crítica: o base_tool (seja vindo do config.yaml, seja de um
-# override via --config base_tool=<x> na linha de comando) PRECISA estar
-# habilitado. Se não estiver, o pipeline exigiria um arquivo que nenhuma
-# regra jamais produziria, e o Snakemake falharia de forma confusa
-# (MissingInputException) já na montagem do DAG, antes de rodar qualquer job.
 _ENABLED_MAP = {
     "patric": PATRIC_ENABLED,
     "bakta": BAKTA_ENABLED,
@@ -287,8 +281,7 @@ if PGAP_ENABLED and BASE_TOOL != "pgap":
 if EGGNOG_ENABLED and BASE_TOOL != "eggnog":
     enabled_secondary.append("eggnog")
 
-if _TOOL_ORDER_RAW:
-    # Divide a string, valida e mantém ordem, removendo duplicatas
+if _TOOL_ORDER_RAW:   
     order_list = []
     seen = set()
     for item in str(_TOOL_ORDER_RAW).split(","):
@@ -320,20 +313,8 @@ TOOL_ORDER = ",".join(order_list)
 
 # String para usar nos nomes de arquivo (substitui vírgulas por hífen)
 ORDER_STR = "-".join(order_list)
-
-# TOOL_ORDER_CUSTOM indica se o usuário de fato definiu 'merge.tool_order'
-# (mesmo que o valor coincida com a ordem padrão). Só nesse caso a flag
-# --tool-order é passada ao container e o sufixo __ORDER_STR é usado nos
-# nomes dos arquivos finais; caso contrário (tool_order ausente/comentado no
-# config.yaml), o pipeline roda no modo "padrão" do container, sem sufixo.
-TOOL_ORDER_CUSTOM = bool(_TOOL_ORDER_RAW)
-FILENAME_SUFFIX = f"__{ORDER_STR}" if TOOL_ORDER_CUSTOM else ""
-
 print(f"[SnakeMergeAnnotation] Ordem final das ferramentas (excluindo base_tool '{BASE_TOOL}'): {TOOL_ORDER}")
-if TOOL_ORDER_CUSTOM:
-    print(f"[SnakeMergeAnnotation] tool_order customizado -> sufixo dos relatórios: {ORDER_STR}")
-else:
-    print("[SnakeMergeAnnotation] tool_order não definido no config -> usando nomes padrão (sem sufixo)")
+print(f"[SnakeMergeAnnotation] Suffix para relatórios: {ORDER_STR}")
 
 # ====================
 # PGAP CONFIG
@@ -368,11 +349,6 @@ print(f"[SnakeMergeAnnotation] {len(SAMPLES)} genome(s) detected")
 # =====================
 CURED_PATTERN = "{sample}_cured.gb"
 
-# Pasta (dentro de merge_results) onde os resultados finais de um lote ficam
-# organizados. Como cada execução normalmente processa um único organismo,
-# usa-se o nome da própria amostra; com múltiplas amostras no mesmo lote
-# (que compartilham um único relatório/gráfico/tabela do merge), usa-se uma
-# pasta de lote para não escolher arbitrariamente uma das amostras.
 RESULT_BATCH_DIR = SAMPLES[0] if len(SAMPLES) == 1 else "batch_" + "-".join(SAMPLES)
 
 # =====================
@@ -643,7 +619,7 @@ def get_base_file_path(sample, tool):
     elif tool == "pgap":
         return os.path.join(DIR_PGAP, sample, f"{sample}_pgap.gbk")
     else:
-        raise ValueError(f"Ferramenta desconhecida: {tool}")
+        raise ValueError(f"Unknown tool: {tool}")
 
 
 def get_merge_inputs(wildcards):
@@ -692,7 +668,12 @@ rule prepare_merge_input:
 # ===========
 # EXTRACT CDS (somente se eggNOG habilitado)
 # ===========
-def get_base_annotation_file(wildcards): 
+def get_base_annotation_file(wildcards):
+    """Retorna o caminho do arquivo de anotação ORIGINAL da ferramenta base
+    (ex: saída direta de annotate_bakta/annotate_dfast/...), que já é um
+    output estaticamente declarado por outra regra. Usar isso em vez do
+    caminho copiado dentro de merge_input/ evita MissingInputException,
+    já que `output:` não pode ser função no Snakemake >= 8."""
     return get_base_file_path(wildcards.sample, BASE_TOOL)
 
 
@@ -931,12 +912,13 @@ if PGAP_ENABLED:
 # =========
 rule run_merge:
     input:       
-        expand(os.path.join(DIR_MERGE, ".merge_inputs_ready.{sample}"), sample=SAMPLES),        
+        expand(os.path.join(DIR_MERGE, ".merge_inputs_ready.{sample}"), sample=SAMPLES),       
         expand(os.path.join(DIR_MERGE, "{sample}_eggnog.emapper.annotations"), sample=SAMPLES) if EGGNOG_ENABLED else []
-    output:       
-        report    = os.path.join(DIR_MERGE,  f"hp_summary_report{FILENAME_SUFFIX}.tsv"),
-        hp_plot   = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"hp_reduction_plot{FILENAME_SUFFIX}.png"),
-        art_table = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"article_ready_table{FILENAME_SUFFIX}.csv"),
+    output:
+        # Nomes dinâmicos baseados na ordem das ferramentas
+        report    = os.path.join(DIR_MERGE,  f"hp_summary_report__{ORDER_STR}.tsv"),
+        hp_plot   = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"hp_reduction_plot__{ORDER_STR}.png"),
+        art_table = os.path.join(DIR_RESULT, RESULT_BATCH_DIR, f"article_ready_table__{ORDER_STR}.csv"),
         cured     = expand(os.path.join(DIR_MERGE, CURED_PATTERN), sample=SAMPLES)
     threads: max(1, THREADS // MAX_JOBS)
     resources:
@@ -957,7 +939,7 @@ rule run_merge:
         if not PGAP_ENABLED:   flags.append("--no-pgap")
         if not EGGNOG_ENABLED: flags.append("--no-eggnog")
         flags.append(f"--base-tool {BASE_TOOL}")
-        if TOOL_ORDER_CUSTOM and TOOL_ORDER:
+        if TOOL_ORDER:
             flags.append(f"--tool-order {TOOL_ORDER}")
         timeout_min = get_timeout_min("run_merge")
         shell(f"""
@@ -983,13 +965,23 @@ rule run_merge:
                 {IMG_MERGE} \
                 -R a+rwX /data /results 2>/dev/null || true
         """)
-       
+
+        # --- CORREÇÃO: Verificação flexível com nomes fixos e renomeação ---
         def _shallowest(paths):
             """Ordena por profundidade (menos subpastas primeiro), preferindo
             arquivos já no lugar certo sobre os que estão em subpastas."""
             return sorted(paths, key=lambda p: p.count(os.sep))
 
-        def resolve_output(out_file, possible_names, search_dir=None):           
+        def resolve_output(out_file, possible_names, search_dir=None):
+            """Garante que 'out_file' exista, procurando recursivamente por
+            nomes alternativos (sem sufixo, com sufixo __ORDER_STR, ou dentro
+            de subpastas como 'order__<sufixo>/' / '<amostra>/' criadas pelo
+            container do merge quando um tool_order customizado é usado).
+            Se 'search_dir' não for passado, usa o diretório do próprio
+            'out_file' — mas quando o destino final foi movido para uma
+            subpasta (ex.: a pasta do organismo) e o container ainda escreve
+            os arquivos direto na raiz, passe explicitamente o diretório raiz
+            para que a busca recursiva o alcance."""
             if search_dir is None:
                 search_dir = os.path.dirname(out_file)
             ensure_writable_dir(os.path.dirname(out_file))
