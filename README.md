@@ -178,8 +178,8 @@ Full output folder structure: see **[docs/advanced-guide.md — Output Structure
 | `quay.io/biocontainers/eggnog-mapper:2.1.13--pyhdfd78af_1` |  |eggnog-mappe | Annotation |
 | `ncbi/pgap:2026-06-18.build8602` | | ncbi/pgap | Annotation | 
 
-All images are available at https://hub.docker.com/u/engbio
 ---
+Note: All images are available at https://hub.docker.com/u/engbio
 
 ## Running Into Problems?
 
