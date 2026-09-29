@@ -1,0 +1,12 @@
+# Runtime artifacts (created by app.py / Snakemake on first run, not source)
+.dependencies_installed
+.snakemake/
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
+
+# Local overrides some users keep alongside config.yaml
+config.local.yaml
+*.env

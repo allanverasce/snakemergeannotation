@@ -870,6 +870,14 @@
                         <input type="number" id="max_jobs" min="1" max="100" value="2">
                         <div class="help-text">Maximum jobs in parallel (default: 2)</div>
                     </div>
+                    <div class="form-group">
+                        <label> Container Runtime</label>
+                        <select id="container_runtime" style="width: 100%; padding: 12px; border: 1px solid #d0d8e2; border-radius: 8px; font-size: 1em; background: white;">
+                            <option value="docker">Docker</option>
+                            <option value="apptainer">Apptainer / Singularity (HPC)</option>
+                        </select>
+                        <div class="help-text">Use Apptainer on HPC clusters where Docker is unavailable. PGAP must be disabled under Apptainer (its own script always launches Docker internally).</div>
+                    </div>
                 </div>
             </div>
 
@@ -1001,6 +1009,11 @@
                         <div class="form-group">
                             <label>Organism</label>
                             <input type="text" id="dfast_organism" value="Streptomyces">
+                        </div>
+                        <div class="form-group">
+                            <label>Genetic Code</label>
+                            <input type="number" id="dfast_gcode" value="11" min="1" max="25">
+                            <div class="help-text">Translation table passed to DFAST as --gcode (default: 11)</div>
                         </div>
                     </div>
 
@@ -1145,6 +1158,11 @@
                         <label>Parallel Jobs</label>
                         <input type="number" id="merge_jobs" min="1" max="100" value="2">
                         <div class="help-text">Organisms processed in parallel during merge</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tool Order (optional)</label>
+                        <input type="text" id="tool_order" placeholder="bakta,prokka,dfast,pgap,eggnog">
+                        <div class="help-text">Comma-separated order in which secondary tools are merged onto the base annotation. Leave empty for the default order (bakta,prokka,dfast,pgap,eggnog); the base tool and any disabled tool are skipped automatically.</div>
                     </div>
                 </div>
             </div>
@@ -1462,6 +1480,7 @@
                 document.getElementById('threads').value = config.general.threads;
                 document.getElementById('mem_mb').value = config.resources.mem_mb;
                 document.getElementById('max_jobs').value = config.resources.max_jobs;
+                document.getElementById('container_runtime').value = config.container_runtime || 'docker';
                 
                 // Base tool
                 document.getElementById('base_tool').value = config.base_tool || 'patric';
@@ -1491,6 +1510,7 @@
                 document.getElementById('dfast_image').value = config.dfast.docker_image;
                 document.getElementById('dfast_db').value = config.dfast.db_path;
                 document.getElementById('dfast_organism').value = config.dfast.organism;
+                document.getElementById('dfast_gcode').value = config.dfast.gcode || 11;
                 
                 // PATRIC
                 document.getElementById('patric_enabled').checked = config.patric.enabled;
@@ -1536,6 +1556,7 @@
                 document.getElementById('merge_pident').value = config.merge.min_pident;
                 document.getElementById('merge_qcov').value = config.merge.min_qcov;
                 document.getElementById('merge_jobs').value = config.merge.jobs;
+                document.getElementById('tool_order').value = config.merge.tool_order || '';
                 
                 showNotification('Configuration loaded successfully!', 'success');
             } catch (error) {
@@ -1565,6 +1586,7 @@
                     },
                     base_tool: document.getElementById('base_tool').value,
                     mode: document.querySelector('input[name="data_type"]:checked').value, // <-- NOVO
+                    container_runtime: document.getElementById('container_runtime').value,
                     bakta: {
                         enabled: document.getElementById('bakta_enabled').checked,
                         docker_image: document.getElementById('bakta_image').value,
@@ -1589,7 +1611,8 @@
                         enabled: document.getElementById('dfast_enabled').checked,
                         docker_image: document.getElementById('dfast_image').value,
                         db_path: document.getElementById('dfast_db').value,
-                        organism: document.getElementById('dfast_organism').value
+                        organism: document.getElementById('dfast_organism').value,
+                        gcode: parseInt(document.getElementById('dfast_gcode').value)
                     },
                     patric: {
                         enabled: document.getElementById('patric_enabled').checked,
@@ -1619,7 +1642,11 @@
                         docker_image: document.getElementById('merge_image').value,
                         min_pident: parseFloat(document.getElementById('merge_pident').value),
                         min_qcov: parseFloat(document.getElementById('merge_qcov').value),
-                        jobs: parseInt(document.getElementById('merge_jobs').value)
+                        jobs: parseInt(document.getElementById('merge_jobs').value),
+                        // Empty string means "use the default order"; the
+                        // Snakefile treats it the same as the key being
+                        // absent (falls back to bakta,prokka,dfast,pgap,eggnog).
+                        tool_order: document.getElementById('tool_order').value.trim()
                     }
                 };
 

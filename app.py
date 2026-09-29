@@ -145,14 +145,27 @@ def deep_merge(base, update):
 def get_default_config():
     """Returns default configuration with mode, base_tool and all tools"""
     return {
-        'mode': 'genomic',                     
+        'mode': 'genomic',
         'base_tool': 'patric',
+        # 'docker' (default) or 'apptainer', for HPC clusters where Docker's
+        # root daemon is unavailable. PGAP must stay disabled under
+        # 'apptainer': NCBI's own pgap.py script always launches Docker
+        # internally and has no Apptainer mode of its own.
+        'container_runtime': 'docker',
+        'apptainer': {
+            'extra_flags': [],
+            # Optional local .sif overrides per tool, for compute nodes with
+            # no internet access. Left empty, each image is pulled and
+            # converted on the fly from docker://<that tool's docker_image>.
+            'sif': {}
+        },
         'paths': {
             'fasta_dir': '/path/to/your/genomes',
             'output_dir': '/path/to/your/output'
         },
         'general': {
-            'threads': 8
+            'threads': 8,
+            'dir_mode': '0775'
         },
         'resources': {
             'mem_mb': 16000,
@@ -182,7 +195,8 @@ def get_default_config():
             'enabled': True,
             'docker_image': 'engbio/dfast:v1',
             'db_path': '/path/to/dfast_db',
-            'organism': 'Streptomyces'
+            'organism': 'Streptomyces',
+            'gcode': 11
         },
         'patric': {
             'enabled': True,
@@ -212,7 +226,10 @@ def get_default_config():
             'docker_image': 'engbio/merge:v1',
             'min_pident': 95.0,
             'min_qcov': 0.9,
-            'jobs': 2
+            'jobs': 2,
+            # Comma-separated order for secondary tools, e.g.
+            # 'bakta,prokka,dfast,pgap,eggnog'. Empty means the default order.
+            'tool_order': ''
         },
         'watchdog':{
             'max_retries':'2',
@@ -262,7 +279,23 @@ def check_snakemake_installed():
 
 def check_docker_installed():
     try:
-        result = subprocess.run(['docker', '--version'], 
+        result = subprocess.run(['docker', '--version'],
+                               capture_output=True, text=True)
+        return result.returncode == 0, result.stdout.strip()
+    except:
+        return False, None
+
+def check_apptainer_installed():
+    try:
+        result = subprocess.run(['apptainer', '--version'],
+                               capture_output=True, text=True)
+        if result.returncode == 0:
+            return True, result.stdout.strip()
+    except:
+        pass
+    try:
+        # Older HPC modules may still expose it as 'singularity'.
+        result = subprocess.run(['singularity', '--version'],
                                capture_output=True, text=True)
         return result.returncode == 0, result.stdout.strip()
     except:
@@ -718,9 +751,16 @@ def execute_snakemake():
     installed, version = check_snakemake_installed()
     if not installed:
         return jsonify({'success': False, 'message': 'Snakemake not found. Install with: conda install -c bioconda snakemake'}), 500
-    docker_ok, docker_version = check_docker_installed()
-    if not docker_ok:
-        return jsonify({'success': False, 'warning': 'Docker not found. Annotator images may not work.'}), 200
+    current_config = load_config()
+    runtime = current_config.get('container_runtime', 'docker')
+    if runtime == 'apptainer':
+        docker_ok, docker_version = check_apptainer_installed()
+        if not docker_ok:
+            return jsonify({'success': False, 'warning': 'Apptainer/Singularity not found on PATH. Annotator images may not work.'}), 200
+    else:
+        docker_ok, docker_version = check_docker_installed()
+        if not docker_ok:
+            return jsonify({'success': False, 'warning': 'Docker not found. Annotator images may not work.'}), 200
     execution_status['running'] = True
     execution_status['progress'] = 0
     execution_status['total_jobs'] = 0

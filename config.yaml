@@ -3,9 +3,58 @@ paths:
   output_dir: <outputPath>
 general:
   threads: 20
+  dir_mode: '0775'
 resources:
   mem_mb: 20000
   max_jobs: 2
+  per_rule:
+    annotate_dfast: 18g
+    run_eggnog: 18g
+container_runtime: docker
+apptainer:
+  extra_flags: []
+  sif:
+    bakta: null
+    prokka: null
+    dfast: null
+    patric: null
+    merge: null
+    eggnog: null
+docker:
+  shm_size: 2g
+  log_opts: true
+  log_max_size: 10m
+  disable_swap: true
+  map_host_user: auto
+  extra_flags: []
+watchdog:
+  max_retries: 4
+  inactivity_timeout: 90m
+  max_runtime: 0s
+  check_interval: 120s
+  cpu_threshold: 1.0
+  grace: 120s
+  per_rule:
+    annotate_bakta:
+      inactivity_timeout: 90m
+    annotate_prokka:
+      inactivity_timeout: 90m
+    annotate_dfast:
+      inactivity_timeout: 90m
+    annotate_patric:
+      inactivity_timeout: 60m
+      max_runtime: 96h
+    extract_cds:
+      inactivity_timeout: 30m
+    run_eggnog:
+      inactivity_timeout: 240m
+      check_interval: 180s
+    annotate_pgap:
+      inactivity_timeout: 300m
+      check_interval: 180s
+    run_merge:
+      inactivity_timeout: 240m
+      check_interval: 180s
 bakta:
   enabled: true
   docker_image: engbio/bakta:v1
@@ -29,11 +78,12 @@ dfast:
   docker_image: engbio/dfast:v1
   db_path: <pathDatabase>/dfast_db
   organism: unknown
+  gcode: 11
 patric:
   enabled: true
   docker_image: engbio/patric:v1
   username: username
-  password: 'password'
+  password: password
   taxonomy_id: 1883
   description: Bacteria
   workspace_output_dir: home
@@ -56,9 +106,5 @@ merge:
   min_qcov: 0.9
   jobs: 2
   #tool_order: bakta,prokka,dfast,pgap,eggnog
-watchdog:
-  max_retries: 4
-  inactivity_timeout: 2880m
-  check_interval: 240s
 base_tool: patric
 mode: genomic

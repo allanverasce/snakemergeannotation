@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/snakemake-≥9.0-brightgreen" alt="Snakemake">
-  <img src="https://img.shields.io/badge/docker-required-blue" alt="Docker">
+  <img src="https://img.shields.io/badge/docker%20%7C%20apptainer-supported-blue" alt="Docker or Apptainer">
   <img src="https://img.shields.io/badge/python-3.11-blue" alt="Python">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
 </p>
@@ -15,12 +15,14 @@
 
 ## Requirements
 
-You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside Docker containers:
+You only need to install two things on your machine — everything else (Python, BLAST+, Biopython, annotation tools, databases) runs inside containers:
 
 | Dependency | Version | Install |
 |---|---|---|
-| **Docker** | ≥ 20.10 | <https://docs.docker.com/get-docker/> |
+| **Docker** *or* **Apptainer/Singularity** | Docker ≥ 20.10 · Apptainer ≥ 1.1 | <https://docs.docker.com/get-docker/> · <https://apptainer.org/docs/admin/main/installation.html> |
 | **Snakemake** | ≥ 9.0 | `pip install snakemake` |
+
+Apptainer is the recommended option on HPC clusters, where Docker's root daemon is usually not available (see [Container Runtime](#container-runtime-docker-or-apptainer) below). No image rebuild is needed to switch: the same `engbio/*` and third-party images work under both runtimes.
 
 A free account at [bv-brc.org](https://www.bv-brc.org) is also required for the PATRIC annotation step.
 
@@ -59,6 +61,7 @@ If you're already familiar with Snakemake, Docker, and editing `.yaml` files, yo
 - [How It Works](#how-it-works)
 - [Genomic vs. Metagenomic Data](#genomic-vs-metagenomic-data)
 - [Requirements](#requirements)
+- [Container Runtime: Docker or Apptainer](#container-runtime-docker-or-apptainer)
 - [Repository Structure](#repository-structure)
 - [Output Results](#output-results)
 - [Docker Images](#docker-images)
@@ -128,12 +131,45 @@ Full command-line examples for both genomic and metagenomic runs: see **[docs/ad
 
 ---
 
+## Container Runtime: Docker or Apptainer
+
+SnakeMergeAnnotation runs every annotation tool inside a container. By default that container runtime is **Docker**, but on HPC clusters — where Docker's root daemon is typically unavailable — the pipeline can run the exact same images through **Apptainer** (formerly Singularity) instead, with no image rebuild required.
+
+Set it in `config.yaml`:
+
+```yaml
+container_runtime: docker      # or: apptainer
+apptainer:
+  extra_flags: []
+  # Optional local .sif files, for compute nodes with no internet access.
+  # Left empty, each image is pulled and converted on the fly from
+  # docker://<that tool's docker_image>, then cached locally.
+  sif:
+    bakta: null
+    prokka: null
+    dfast: null
+    patric: null
+    merge: null
+    eggnog: null
+```
+
+Notes:
+- Every `docker_image` reference already in `config.yaml` (`engbio/bakta:v1`, `engbio/merge:v1`, etc.) is reused as-is under Apptainer — it is pulled as `docker://<image>` the first time a rule needs it. Pre-converted `.sif` files can be supplied per tool via `apptainer.sif.<tool>` for nodes without internet access.
+- Apptainer runs as the invoking user by default, so there is no user/UID mapping to configure (unlike Docker, where `docker.map_host_user` controls this).
+- Per-container memory/CPU ceilings (`--memory`, `--cpus`) are a Docker-specific concept; under Apptainer, resource limits are the job scheduler's responsibility (SLURM, PBS, ...), together with Snakemake's own `resources:`/`--resources` settings.
+- **PGAP requires Docker.** NCBI's own `pgap.py` script always launches Docker containers internally and has no Apptainer mode of its own. Set `pgap.enabled: false` when `container_runtime: apptainer` — the pipeline validates this at startup and stops with a clear error otherwise.
+- Process supervision (inactivity timeouts, retries, OOM/exit-code diagnostics) works identically under both runtimes — see `scripts/docker_watchdog.py`.
+
+---
+
 ## Repository Structure
 
 ```
 snakemergeannotation/
 ├── app.py                  # Graphical interface (basic mode)
 ├── Snakefile                # Pipeline definition (advanced mode)
+├── scripts/
+│   └── docker_watchdog.py   # Cross-platform inactivity supervisor (Docker & Apptainer)
 ├── pgap.py                  # PGAP database downloader/updater
 ├── config.yaml              # Essential configuration
 ├── config_advanced.yaml     # Technical parameters (optional)
