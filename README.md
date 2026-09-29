@@ -172,13 +172,11 @@ snakemergeannotation/
 │   └── docker_watchdog.py   # Cross-platform inactivity supervisor (Docker & Apptainer)
 ├── pgap.py                  # PGAP database downloader/updater
 ├── config.yaml              # Essential configuration
-├── config_advanced.yaml     # Technical parameters (optional)
 ├── docs/                     # Guides and documentation
 │   ├── quick-start-guide.md
 │   ├── advanced-guide.md
 │   ├── troubleshooting.md
 │   └── glossary.md
-├── examples/                 # Sample configuration and data
 ├── screen/                    # Screenshots used in the documentation
 ├── templates/                 # Web interface templates
 └── LICENSE
